@@ -11,7 +11,8 @@ public class myEncoder {
     private static int height = 540;
     private static int channelSize = width * height;
     private static int frameSize = channelSize * 3;
-    private static int[] inputArray = new int[frameSize];
+    private static int[] prevFrame = new int[frameSize];
+    private static int[] currFrame = new int[frameSize];
     
     // PART1: videoSegmentation
 
@@ -48,15 +49,37 @@ public class myEncoder {
         try {
             FileInputStream fis = new FileInputStream(inputFile);
 
-            int iterator = 0;
-            while (readFrame(fis)) {
+            for (int i = 0; readFrame(fis); i++) {
                 formatFrame();
-                // displays progress
-                System.out.println(iterator);
-                iterator++;
+                // if not I-frame
+                if (i != 0) {
+                    // PART1: videoSegmentation
+                    // macroblock --> divide frames into 16 x 16 blocks
+                    // computerMotionVector --> technique = MAD
+                    // getLayers
+
+                    // PART2: compression
+                    // block --> divide each macroblock into 8x8 blocks for each frame
+                    // DCT
+                    // quantize(n1, n2)
+                    // write to compressed file
+                    // store in prevFrame
+                }
+                // if I-frame
+                else {
+                    // divide I-frame into 8x8 blocks
+                    // DCT
+                    // quantize with higher resolution (lower quantization step)
+                    // write to compressed file
+                    // store in prevFrame
+                }
+                // DEBUG: displays progress
+                System.out.println("Frame processed:" + i);
             }
+
+            // DEBUG: prints last 90 RGB values of last frame
             for (int i = 0; i < 30; i += 3) {
-                System.out.printf("R: %d, G: %d, B: %d\n", inputArray[i], inputArray[i+1], inputArray[i+2]);
+                System.out.printf("R: %d, G: %d, B: %d\n", currFrame[i], currFrame[i+1], currFrame[i+2]);
             }
 
             fis.close();
@@ -67,12 +90,13 @@ public class myEncoder {
 
     public static boolean readFrame(FileInputStream fis) throws IOException {
         for (int i = 0; i < frameSize; i++) {
+            // used temp variable so that final currFrame value is not assigned -1
             int temp = 0;
             if ((temp = fis.read()) == -1) {
                 return false;
             }
             else {
-                inputArray[i] = temp;
+                currFrame[i] = temp;
             }
         }
         return true;
@@ -81,39 +105,13 @@ public class myEncoder {
     public static void formatFrame() {
         int[] tempArray = new int[frameSize];
 
+        // change currFrame from RRR.GGG.BBB to RGB.RGB.RGB
         for (int i = 0; i < channelSize; i++) {
-            tempArray[i*3] = inputArray[i];
-            tempArray[i*3+1] = inputArray[channelSize + i];
-            tempArray[i*3+2] = inputArray[channelSize * 2 + i];
+            tempArray[i*3] = currFrame[i];
+            tempArray[i*3+1] = currFrame[channelSize + i];
+            tempArray[i*3+2] = currFrame[channelSize * 2 + i];
         }
 
-        inputArray = tempArray;
+        currFrame = tempArray;
     }
-
-    // public static void formatFrameArray() {
-    //     ArrayList<Integer> tempArray = new ArrayList<Integer>(inputArray.size());
-    //     int channelSize = width * height;
-    //     int frameSize = channelSize * 3;
-    //     int numFrames = inputArray.size() / frameSize;
-
-    //     // for each frame
-    //     for (int frame = 0; frame < numFrames; frame++) {
-    //         int frameStartIndex = frame * frameSize;
-    //         for (int i = 0; i < frameSize; i++) {
-    //             // if this is an R value
-    //             if (i < channelSize) {
-    //                 tempArray.set(frameStartIndex + i * 3, inputArray.get(frameStartIndex + i));
-    //             }
-    //             // if this is a G value
-    //             else if (i < channelSize * 2 / 3) {
-    //                 tempArray.set(frameStartIndex + (i - channelSize) * 3 + 1, inputArray.get(frameStartIndex + i));
-    //             }
-    //             // if this is a B value
-    //             else {
-    //                 tempArray.set(frameStartIndex + (i - (channelSize * 2) * 3 + 2), inputArray.get(frameStartIndex + i));
-    //             }
-    //         }
-    //     }
-    //     inputArray = tempArray;
-    // }
 }
