@@ -18,7 +18,10 @@ public class MyEncoder {
     private static final int BLOCK_SIZE = 8;
     
     private int[] prevFrame;
+    private List<int[][][]> prevMacroblocks;
+
     private int[] currFrame;
+    private List<int[][][]> currMacroblocks;
 
     /**
      * Constructor
@@ -32,11 +35,14 @@ public class MyEncoder {
         this.n2 = n2;
 
         prevFrame = new int[FRAME_SIZE];
+        prevMacroblocks = new ArrayList<>();
+
         currFrame = new int[FRAME_SIZE];
+        currMacroblocks = new ArrayList<>();
     }
     
 
-    // PART 0: PRE-PROCESS FILE DATA
+    // ----- PART 0: PRE-PROCESS FILE DATA -----
     
     /**
      * Reads the entire .rgb file frame-by-frame
@@ -48,27 +54,34 @@ public class MyEncoder {
 
             for (int i = 0; readFrame(fis); i++) {
                 formatFrame();
-                // if not I-frame
+                // if not I-frame --> if P-frame
                 if (i != 0) {
                     // PART 1: VIDEO SEGMENTATION
-                    List<int[][][]> macroblocks = macroblock();
-                    // computeMotionVector();
-                    // getLayer();
+                    // not sure if this is the best way to store all of this (maybe 1D is better) - but for now at least lines up all the info fine
+                    // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
+                    currMacroblocks = macroblock();             
+                    List<int[][]> motionVectors = computeMotionVectors(currMacroblocks);    
+                    List<Integer> layers = getLayers();
 
                     // PART 2: COMPRESSION
-                    // block();
-                    // DCT();
-                    // quantize(n1, n2);
+                    List<int[][][]> blocks = block(currMacroblocks);
+                    List<int[][][]> dctBlocks = dct(blocks);
+                    List<int[][][]> quantizedBlocks = quantize(dctBlocks);  // quantize(n1, n2);
                     // write to compressed file
-                    // store in prevFrame
+                    // store in prevFrame:
+                    prevFrame = currFrame;
+                    prevMacroblocks = currMacroblocks;
                 }
                 // if I-frame
                 else {
-                    // divide I-frame into 8x8 blocks
-                    // DCT();
-                    // quantize with higher resolution (lower quantization step)
+                    currMacroblocks = macroblock(); // still macroblock so compression steps can be the same
+                    List<int[][][]> blocks = block(currMacroblocks);
+                    List<int[][][]> dctBlocks = dct(blocks);
+                    List<int[][][]> quantizedBlocks = quantize(dctBlocks);  // quantize with higher resolution (lower quantization step)
                     // write to compressed file
-                    // store in prevFrame
+                    // store in prevFrame:
+                    prevFrame = currFrame;
+                    prevMacroblocks = currMacroblocks;
                 }
                 // DEBUG: displays progress
                 System.out.println("Frame processed:" + i);
@@ -121,7 +134,7 @@ public class MyEncoder {
         currFrame = tempArray;
     }
 
-    // PART 1: VIDEO SEGMENTATION
+    // ----- PART 1: VIDEO SEGMENTATION -----
 
     /**
      * Divides the current frame into 16x16 macroblocks
@@ -156,31 +169,47 @@ public class MyEncoder {
         return macroblocks;
     }
     
+    // finds displacement between motion vector of prevFrame and currFrame (AKA, for each macroblock)
     // technique to use = MAD
-    private void computeMotionVector() {
-
+    // will need previous macro blocks and current macro blocks
+    private List<int[][]> computeMotionVectors(List<int[][][]> macroblocks) {
+        List<int[][]> motionVectors = new ArrayList<>(); // list of (dx, dy) vectors
+        
+        return motionVectors;
     }
 
-    private void getLayer() {
+    // background macroblock --> motion vector = 0 (if camera is still), constant (if camera is moving)
+    // foreground macroblock --> motion vector = ?
+    private List<Integer> getLayers() {
+        List<Integer> layers = new ArrayList<>();
 
+        return layers;
     }
 
 
     // PART 2: COMPRESSION
 
-    // divide each macroblock into 8x8 blocks for each frame
-    private void block() {
+    // I-frames: divide entire frame into 8x8 blocks 
+    // P-frames: divide each macroblock into 8x8 blocks for each frame
+    private List<int[][][]> block(List<int[][][]> macroblocks) {
+        List<int[][][]> blocks = new ArrayList<>();
 
+        return blocks;
     }
 
-    private void dct() {
+    private List<int[][][]> dct(List<int[][][]> blocks) {
+        List<int[][][]> dctBlocks = new ArrayList<>();
 
+        return dctBlocks;
     }
 
-    private void quantize() {
+    private List<int[][][]> quantize(List<int[][][]> dctBlocks) {
+        List<int[][][]> quantizedBlocks = new ArrayList<>();
 
+        return quantizedBlocks;
     }
 
+    // scan blocks into output compressed file
     private void scan() {
 
     }
