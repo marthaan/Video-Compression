@@ -131,15 +131,16 @@ public class MyEncoder {
         List<int[][][]> macroblocks = new ArrayList<>();
 
         // iterate over frame macroblock-by-macroblock
-        for (int x = 0; x < WIDTH; x+= MACROBLOCK_SIZE) {
-            for (int y = 0; y < HEIGHT; y+= MACROBLOCK_SIZE) {
+        for (int x = 0; x < WIDTH; x += MACROBLOCK_SIZE) {
+            for (int y = 0; y < HEIGHT; y += MACROBLOCK_SIZE) {
                 // create the current 16x16 macroblock to hold RGB channel data
                 int[][][] macroblock = new int[MACROBLOCK_SIZE][MACROBLOCK_SIZE][3];
                 
                 // iterate over each pixel within the current macroblock
                 for (int i = 0; i < MACROBLOCK_SIZE; i++) {
                     for (int j = 0; j < MACROBLOCK_SIZE; j++) {
-                        int index = ((x + i) * WIDTH + (y + j)) * 3;    // index of pixel 
+                        // calculate where the current pixel's RGB values begin in currFrame
+                        int index = ((x + i) * WIDTH + (y + j)) * 3;    
 
                         // assign the current pixel's RGB values to the current macroblock
                         macroblock[i][j][0] = currFrame[index];         // red channel
