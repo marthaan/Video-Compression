@@ -123,9 +123,33 @@ public class MyEncoder {
 
     // PART 1: VIDEO SEGMENTATION
 
-    // divide current frame into 16 x 16 blocks
+    /**
+     * Divides the current frame into 16x16 macroblocks
+     * @return a list of 16x16 macroblocks, each containing RGB channel data
+     */
     private List<int[][][]> macroblock() {
         List<int[][][]> macroblocks = new ArrayList<>();
+
+        // iterate over frame macroblock-by-macroblock
+        for (int x = 0; x < WIDTH; x+= MACROBLOCK_SIZE) {
+            for (int y = 0; y < HEIGHT; y+= MACROBLOCK_SIZE) {
+                // create the current 16x16 macroblock to hold RGB channel data
+                int[][][] macroblock = new int[MACROBLOCK_SIZE][MACROBLOCK_SIZE][3];
+                
+                // iterate over each pixel within the current macroblock
+                for (int i = 0; i < MACROBLOCK_SIZE; i++) {
+                    for (int j = 0; j < MACROBLOCK_SIZE; j++) {
+                        int index = (x * WIDTH + y) * 3;    // index of pixel 
+
+                        macroblock[i][j][0] = currFrame[index]; // R
+                        macroblock[i][j][1] = currFrame[index + 1]; // G
+                        macroblock[i][j][2] = currFrame[index + 2]; // B
+                    }
+                }
+
+                macroblocks.add(macroblock);
+            }
+        }
 
         return macroblocks;
     }
