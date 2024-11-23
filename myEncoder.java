@@ -1,6 +1,8 @@
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MyEncoder {
     private File inputFile; // input file for each instance 
@@ -9,8 +11,11 @@ public class MyEncoder {
 
     private static final int WIDTH = 960;   // width of each frame
     private static final int HEIGHT = 540;  // height of each frame
-    private static final int channelSize = WIDTH * HEIGHT;  // 518,400 bytes per channel (per frame)
-    private static final int frameSize = channelSize * 3;   // 1,555,200 total bytes per frame
+    private static final int CHANNEL_SIZE = WIDTH * HEIGHT;  // 518,400 bytes per channel (per frame)
+    private static final int FRAME_SIZE = CHANNEL_SIZE * 3;   // 1,555,200 total bytes per frame
+
+    private static final int MACROBLOCK_SIZE = 16;
+    private static final int BLOCK_SIZE = 8;
     
     private int[] prevFrame;
     private int[] currFrame;
@@ -26,8 +31,8 @@ public class MyEncoder {
         this.n1 = n1;
         this.n2 = n2;
 
-        prevFrame = new int[frameSize];
-        currFrame = new int[frameSize];
+        prevFrame = new int[FRAME_SIZE];
+        currFrame = new int[FRAME_SIZE];
     }
     
 
@@ -46,7 +51,7 @@ public class MyEncoder {
                 // if not I-frame
                 if (i != 0) {
                     // PART 1: VIDEO SEGMENTATION
-                    // macroblock();
+                    List<int[][][]> macroblocks = macroblock();
                     // computerMotionVector();
                     // getLayer();
 
@@ -87,7 +92,7 @@ public class MyEncoder {
      * @throws IOException if there is an error reading from the file
      */
     private boolean readFrame(FileInputStream fis) throws IOException {
-        for (int i = 0; i < frameSize; i++) {
+        for (int i = 0; i < FRAME_SIZE; i++) {
             // used temp variable so that final currFrame value is not assigned -1
             int temp = fis.read();
 
@@ -105,12 +110,12 @@ public class MyEncoder {
      * Rearranges the current frame's pixel data from RRR.GGG.BBB to RGB.RGB.RGB
      */
     private void formatFrame() {
-        int[] tempArray = new int[frameSize];
+        int[] tempArray = new int[FRAME_SIZE];
 
-        for (int i = 0; i < channelSize; i++) {
+        for (int i = 0; i < CHANNEL_SIZE; i++) {
             tempArray[i * 3] = currFrame[i];
-            tempArray[i * 3 + 1] = currFrame[channelSize + i];
-            tempArray[i * 3 + 2] = currFrame[channelSize * 2 + i];
+            tempArray[i * 3 + 1] = currFrame[CHANNEL_SIZE + i];
+            tempArray[i * 3 + 2] = currFrame[CHANNEL_SIZE * 2 + i];
         }
 
         currFrame = tempArray;
@@ -119,8 +124,10 @@ public class MyEncoder {
     // PART 1: VIDEO SEGMENTATION
 
     // divide current frame into 16 x 16 blocks
-    private void macroblock() {
-        
+    private List<int[][][]> macroblock() {
+        List<int[][][]> macroblocks = new ArrayList<>();
+
+        return macroblocks;
     }
     
     // technique to use = MAD
