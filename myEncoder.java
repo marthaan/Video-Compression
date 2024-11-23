@@ -60,7 +60,7 @@ public class MyEncoder {
                     // not sure if this is the best way to store all of this (maybe 1D is better) - but for now at least lines up all the info fine
                     // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
                     currMacroblocks = macroblock();             
-                    List<int[][]> motionVectors = computeMotionVectors(currMacroblocks);    
+                    List<int[]> motionVectors = computeMotionVectors(currMacroblocks);    
                     List<Integer> layers = getLayers();
 
                     // PART 2: COMPRESSION
@@ -141,7 +141,7 @@ public class MyEncoder {
      * @return a list of 16x16 macroblocks, each containing RGB channel data
      */
     private List<int[][][]> macroblock() {
-        List<int[][][]> macroblocks = new ArrayList<>();
+        List<int[][][]> macroblocks = new ArrayList<>();    // int[x][y][r, g, or b val for (x, y)]
 
         // iterate over frame macroblock-by-macroblock
         for (int x = 0; x < WIDTH; x += MACROBLOCK_SIZE) {
@@ -172,14 +172,17 @@ public class MyEncoder {
     // finds displacement between motion vector of prevFrame and currFrame (AKA, for each macroblock)
     // technique to use = MAD
     // will need previous macro blocks and current macro blocks
-    private List<int[][]> computeMotionVectors(List<int[][][]> macroblocks) {
-        List<int[][]> motionVectors = new ArrayList<>(); // list of (dx, dy) vectors
+    private List<int[]> computeMotionVectors(List<int[][][]> macroblocks) {
+        List<int[]> motionVectors = new ArrayList<>(); // list of (dx, dy) vectors
         
+        int[] vector = new int[2]; // int[0] = dx, int[1] = dy
+
         return motionVectors;
     }
 
     // background macroblock --> motion vector = 0 (if camera is still), constant (if camera is moving)
     // foreground macroblock --> motion vector = ?
+    // could do a boolean list or integer list using 1 = foreground, 2 = background for a macroblock
     private List<Integer> getLayers() {
         List<Integer> layers = new ArrayList<>();
 
