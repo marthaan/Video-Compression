@@ -6,13 +6,13 @@ import java.util.List;
 
 public class MyEncoder {
     private File inputFile; // input file for each instance 
-    private int n1;  // foreground quantization step
-    private int n2;  // background quantization step
+    private int n1;         // foreground quantization step
+    private int n2;         // background quantization step
 
-    private static final int WIDTH = 960;   // width of each frame
-    private static final int HEIGHT = 540;  // height of each frame
-    private static final int CHANNEL_SIZE = WIDTH * HEIGHT;  // 518,400 bytes per channel (per frame)
-    private static final int FRAME_SIZE = CHANNEL_SIZE * 3;   // 1,555,200 total bytes per frame
+    private static final int WIDTH = 960;                       // width of each frame
+    private static final int HEIGHT = 540;                      // height of each frame
+    private static final int CHANNEL_SIZE = WIDTH * HEIGHT;     // 518,400 bytes per channel (per frame)
+    private static final int FRAME_SIZE = CHANNEL_SIZE * 3;     // 1,555,200 total bytes per frame
 
     private static final int MACROBLOCK_SIZE = 16;
     private static final int BLOCK_SIZE = 8;
@@ -52,7 +52,7 @@ public class MyEncoder {
                 if (i != 0) {
                     // PART 1: VIDEO SEGMENTATION
                     List<int[][][]> macroblocks = macroblock();
-                    // computerMotionVector();
+                    // computeMotionVector();
                     // getLayer();
 
                     // PART 2: COMPRESSION
@@ -65,7 +65,7 @@ public class MyEncoder {
                 // if I-frame
                 else {
                     // divide I-frame into 8x8 blocks
-                    // DCT
+                    // DCT();
                     // quantize with higher resolution (lower quantization step)
                     // write to compressed file
                     // store in prevFrame
@@ -139,11 +139,12 @@ public class MyEncoder {
                 // iterate over each pixel within the current macroblock
                 for (int i = 0; i < MACROBLOCK_SIZE; i++) {
                     for (int j = 0; j < MACROBLOCK_SIZE; j++) {
-                        int index = (x * WIDTH + y) * 3;    // index of pixel 
+                        int index = ((x + i) * WIDTH + (y + j)) * 3;    // index of pixel 
 
-                        macroblock[i][j][0] = currFrame[index]; // R
-                        macroblock[i][j][1] = currFrame[index + 1]; // G
-                        macroblock[i][j][2] = currFrame[index + 2]; // B
+                        // assign the current pixel's RGB values to the current macroblock
+                        macroblock[i][j][0] = currFrame[index];         // red channel
+                        macroblock[i][j][1] = currFrame[index + 1];     // green channel
+                        macroblock[i][j][2] = currFrame[index + 2];     // blue channel
                     }
                 }
 
