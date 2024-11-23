@@ -1,0 +1,20 @@
+MyEncoder
+    - inputs:
+        - .rgb video file
+            - resolution = 960 x 540 pixels = 518,400 pixels = 518,400 * 3 bytes per frame
+                - each pixel = 3 bytes = R, G, B channel data
+            - data = frame1, frame2, frame3...
+                - each frame =  (all R bytes), (all G bytes), (all B bytes)
+            - frame rate = 30 fps
+            - video lengths = varied
+                - read each frame until no frames left
+        - n1
+        - n2
+    - output: 
+
+audio files
+    - .wav folder
+    - mp4
+    - 44.1 KHz
+
+MyDecoder
