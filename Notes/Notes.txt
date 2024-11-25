@@ -1,0 +1,47 @@
+project: layer-wise video compression
+
+MyEncoder
+    - inputs:
+        - input_video.rgb video file
+            - resolution = 960 x 540 pixels = 518,400 pixels = 518,400 * 3 bytes per frame
+                - each pixel = 3 bytes = R, G, B channel data
+            - data = frame1, frame2, frame3...
+                - each frame =  (all R bytes), (all G bytes), (all B bytes)
+            - frame rate = 30 fps
+            - video lengths = varied
+                - read each frame until no frames left
+        - n1 = quantization step for foreground macroblocks
+        - n2 = quantization step for background macroblocks
+    - outputs:
+        - input_video.cmp compressed video file 
+    - steps:
+        - 0. pre-process file data 
+        - 1. video segmentation
+        - 2. compression
+
+MyDecoder
+    - inputs:
+        - input_video.cmp compressed video file 
+            - AKA, the output of MyEncoder
+        - input_audio.wav
+            - audio files --> .wav folder
+                - mp4
+                - 44.1 KHz
+    - outputs:
+        - rendered video + audio
+            - displayed by an A/V player w/ synchronized audio-video playback
+            - playback has stop/pause/play/step capabilities
+                - allows for frame-by-frame observation
+    - steps:
+        - 3. decompression
+        - 4. decoding 
+
+
+
+Notes:
+
+11/23/24 Greg:  Wrote computeMotionVector code. My scoping may not be ideal, like having prevFrame3DArray be a global variable
+                Maybe we can talk about that bc I feel like I never quite learned that right
+                Have not tested computeMotionVector stuff
+                Also, I'm getting an error where the file name should be MyEncoder not myEncoder but
+                I'm scared to change the name because of git reasons lol can you do that
