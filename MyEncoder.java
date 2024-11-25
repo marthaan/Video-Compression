@@ -29,9 +29,9 @@ public class MyEncoder {
 
     /**
      * Constructor
-     * @param inputFile
-     * @param n1
-     * @param n2
+     * @param inputFile input .rgb file for each instance
+     * @param n1 foreground quantization step
+     * @param n2 background quantization step 
      */
     public MyEncoder(File inputFile, int n1, int n2) {
         this.inputFile = inputFile; 
@@ -65,7 +65,7 @@ public class MyEncoder {
             FileOutputStream fos = new FileOutputStream(outputFile);
             fos.write(n1);
             fos.write(n2); */
-
+            
             for (int i = 0; readFrame(fis); i++) {
                 formatFrame();
                 // if not I-frame --> if P-frame
@@ -123,7 +123,6 @@ public class MyEncoder {
      */
     private boolean readFrame(FileInputStream fis) throws IOException {
         for (int i = 0; i < FRAME_SIZE; i++) {
-            // used temp variable so that final currFrame value is not assigned -1
             int temp = fis.read();
 
             if (temp == -1) {
@@ -133,6 +132,7 @@ public class MyEncoder {
                 currFrame[i] = temp;
             }
         }
+
         return true;
     }
 
@@ -151,6 +151,7 @@ public class MyEncoder {
         currFrame = tempArray;
     }
 
+    
     // ----- PART 1: VIDEO SEGMENTATION -----
 
     /**
@@ -159,6 +160,8 @@ public class MyEncoder {
      */
     private List<int[][][]> macroblock() {
         List<int[][][]> macroblocks = new ArrayList<>();    // int[x][y][r, g, or b val for (x, y)]
+
+        // convert currFrame to 3D array
 
         // iterate over frame macroblock-by-macroblock
         for (int x = 0; x < WIDTH; x += MACROBLOCK_SIZE) {
@@ -210,7 +213,7 @@ public class MyEncoder {
      * @param i macroblock number
      * @return motion vector for macroblock i (vector[0] = dx, vector[1] = dy)
      */
-    int[] computeMotionVector(int i) {
+    private int[] computeMotionVector(int i) {
         // find current macroblock's top left position
         // search in k neighborhood (checking boundaries), finding top left pixel of area with min difference
         // vector = top left pixel of area with min difference - top left pixel of macroblock
@@ -243,6 +246,7 @@ public class MyEncoder {
                 // compare macroblocks
                 // if this is the smallest difference we have found so far, save that motion vector in vector
                 int difference = compareMacroblocks(currMacroblocks.get(i), x, y);
+                
                 if (difference < minDifference) {
                     vector[0] = x - topLeftX;
                     vector[1] = y - topLeftY;
@@ -250,6 +254,8 @@ public class MyEncoder {
                 }
             }
         }
+
+        return vector;
     }
 
     /**
@@ -259,7 +265,7 @@ public class MyEncoder {
      * @param y y-value of top left pixel of macroblock-sized area we're comparing with in prevFrame
      * @return integer representing the total difference between the two macroblocks
      */
-    int compareMacroblocks(int[][][] currMacroblock, int topLeftX, int topLeftY) {
+    private int compareMacroblocks(int[][][] currMacroblock, int topLeftX, int topLeftY) {
         int difference = 0;
 
         // find the absolute value of the difference between each r pixel in currMacroblock and its
@@ -303,7 +309,7 @@ public class MyEncoder {
     }
 
 
-    // PART 2: COMPRESSION
+    // ----- PART 2: COMPRESSION -----
 
     // I-frames: divide entire frame into 8x8 blocks 
     // P-frames: divide each macroblock into 8x8 blocks for each frame
