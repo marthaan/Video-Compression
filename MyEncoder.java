@@ -25,7 +25,9 @@ public class MyEncoder {
     private List<int[][][]> prevMacroblocks;
 
     private int[] currFrame;
+    private int[][][] currFrame3DArray;
     private List<int[][][]> currMacroblocks;
+    private List<Integer> layers;
 
     /**
      * Constructor
@@ -42,6 +44,7 @@ public class MyEncoder {
         prevMacroblocks = new ArrayList<>();
 
         currFrame = new int[FRAME_SIZE];
+        // initialize everything?
         currMacroblocks = new ArrayList<>();
     }
     
@@ -78,9 +81,9 @@ public class MyEncoder {
                     List<Integer> layers = getLayers();
 
                     // PART 2: COMPRESSION
-                    List<int[][][]> blocks = block(currMacroblocks);
-                    List<int[][][]> dctBlocks = dct(blocks);
-                    List<int[][][]> quantizedBlocks = quantize(dctBlocks);  // quantize(n1, n2);
+                    // List<int[][][]> blocks = block(currMacroblocks);
+                    // List<int[][][]> dctBlocks = dct(blocks);
+                    // List<int[][][]> quantizedBlocks = quantize(dctBlocks);  // quantize(n1, n2);
                     // write to compressed file
                     scan();
                     // store in prevFrame:
@@ -90,9 +93,10 @@ public class MyEncoder {
                 // if I-frame
                 else {
                     currMacroblocks = macroblock(); // still macroblock so compression steps can be the same
-                    List<int[][][]> blocks = block(currMacroblocks);
-                    List<int[][][]> dctBlocks = dct(blocks);
-                    List<int[][][]> quantizedBlocks = quantize(dctBlocks);  // quantize with higher resolution (lower quantization step)
+                    // compress(currMacroblocks);
+                    // List<int[][][]> blocks = block(currMacroblocks);
+                    // List<int[][][]> dctBlocks = dct(blocks);
+                    // List<int[][][]> quantizedBlocks = quantize(dctBlocks);  // quantize with higher resolution (lower quantization step)
                     // write to compressed file
                     scan();
                     // store in prevFrame:
@@ -161,7 +165,7 @@ public class MyEncoder {
     private List<int[][][]> macroblock() {
         List<int[][][]> macroblocks = new ArrayList<>();    // int[x][y][r, g, or b val for (x, y)]
 
-        // convert currFrame to 3D array
+        currFrame3DArray = convertTo3DArray(currFrame);
 
         // iterate over frame macroblock-by-macroblock
         for (int x = 0; x < WIDTH; x += MACROBLOCK_SIZE) {
@@ -172,13 +176,10 @@ public class MyEncoder {
                 // iterate over each pixel within the current macroblock
                 for (int i = 0; i < MACROBLOCK_SIZE; i++) {
                     for (int j = 0; j < MACROBLOCK_SIZE; j++) {
-                        // calculate where the current pixel's RGB values begin in currFrame
-                        int index = ((x + i) * WIDTH + (y + j)) * 3;    
-
                         // assign the current pixel's RGB values to the current macroblock
-                        macroblock[i][j][0] = currFrame[index];         // red channel
-                        macroblock[i][j][1] = currFrame[index + 1];     // green channel
-                        macroblock[i][j][2] = currFrame[index + 2];     // blue channel
+                        macroblock[i][j][0] = currFrame3DArray[x + i][y + j][0];     // red channel
+                        macroblock[i][j][1] = currFrame3DArray[x + i][y + j][1];     // green channel
+                        macroblock[i][j][2] = currFrame3DArray[x + i][y + j][2];     // blue channel
                     }
                 }
 
@@ -187,6 +188,25 @@ public class MyEncoder {
         }
 
         return macroblocks;
+    }
+
+    /**
+     * Converts a 1D frame to a 3D array
+     * @param frame a 1D frame array
+     * @return 3D frame array
+     */
+    private int[][][] convertTo3DArray(int[] frame) {
+        int[][][] newFrame = new int[WIDTH][HEIGHT][3];
+
+        for (int x = 0; x < WIDTH; x++) {
+            for (int y = 0; y < HEIGHT; y++) {
+                for (int channel = 0; channel < 3; channel++) {
+                    newFrame[x][y][channel] = frame[x*3 + y*3*WIDTH + channel];
+                }
+            }
+        }
+
+        return newFrame;
     }
     
     // finds displacement between motion vector of prevFrame and currFrame (AKA, for each macroblock)
@@ -279,26 +299,6 @@ public class MyEncoder {
         return difference;
     }
 
-    /**
-     * Converts a 1D frame to a 3D array
-     * @param frame a 1D frame array
-     * @return 3D frame array
-     */
-    private int[][][] convertTo3DArray(int[] frame) {
-        int[][][] newFrame = new int[WIDTH][HEIGHT][3];
-
-        for (int x = 0; x < WIDTH; x++) {
-            for (int y = 0; y < HEIGHT; y++) {
-                for (int channel = 0; channel < 3; channel++) {
-                    newFrame[x][y][channel] = frame[x*3 + y*3*WIDTH + channel];
-                }
-            }
-        }
-
-        return newFrame;
-    }
-
-
     // background macroblock --> motion vector = 0 (if camera is still), constant (if camera is moving)
     // foreground macroblock --> motion vector = ?
     // could do a boolean list or integer list using 1 = foreground, 2 = background for a macroblock
@@ -310,11 +310,36 @@ public class MyEncoder {
 
 
     // ----- PART 2: COMPRESSION -----
+    private void compress(List<int[][][]> macroblocks) {
+        for (int i = 0; i < macroblocks.size(); i++) {
+            List<int[][][]> blocks = block(macroblocks.get(i));
+            List<int[][][]> dctBlocks = dct(blocks);
+            List<int[][][]> quantizedBlocks = quantize(dctBlocks, layers.get(i));  // (dctBlocks, layers[i]);
+        }
+    }
 
-    // I-frames: divide entire frame into 8x8 blocks 
-    // P-frames: divide each macroblock into 8x8 blocks for each frame
-    private List<int[][][]> block(List<int[][][]> macroblocks) {
+
+    // divide each macroblock into 8x8 blocks for each frame
+    private List<int[][][]> block(int[][][] macroblock) {
         List<int[][][]> blocks = new ArrayList<>();
+
+        // iterate over the whole macroblock, block-by-block
+        for (int x = 0; x < MACROBLOCK_SIZE; x += BLOCK_SIZE) {
+            for (int y = 0; y < MACROBLOCK_SIZE; y += BLOCK_SIZE) {
+                int[][][] block = new int[BLOCK_SIZE][BLOCK_SIZE][3];
+
+                // iterate within each 8x8 block
+                for (int i = 0; i < BLOCK_SIZE; i++) {
+                    for (int j = 0; j < BLOCK_SIZE; j++) {
+                        block[i][j][0] = macroblock[x + i][y + j][0];
+                        block[i][j][0] = macroblock[x + i][y + j][1];
+                        block[i][j][0] = macroblock[x + i][y + j][2];
+                    }
+                }
+
+                blocks.add(block);
+            }
+        }
 
         return blocks;
     }
@@ -325,8 +350,15 @@ public class MyEncoder {
         return dctBlocks;
     }
 
-    private List<int[][][]> quantize(List<int[][][]> dctBlocks) {
+    private List<int[][][]> quantize(List<int[][][]> dctBlocks, int layer) {
         List<int[][][]> quantizedBlocks = new ArrayList<>();
+
+        if (layer == 0) {   // if foreground
+            // use n1
+        }
+        else {  // if background
+            // use n2
+        }
 
         return quantizedBlocks;
     }
