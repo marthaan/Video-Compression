@@ -176,10 +176,13 @@ public class MyEncoder {
                 // iterate over each pixel within the current macroblock
                 for (int i = 0; i < MACROBLOCK_SIZE; i++) {
                     for (int j = 0; j < MACROBLOCK_SIZE; j++) {
-                        // assign the current pixel's RGB values to the current macroblock
-                        macroblock[i][j][0] = currFrame3DArray[x + i][y + j][0];     // red channel
-                        macroblock[i][j][1] = currFrame3DArray[x + i][y + j][1];     // green channel
-                        macroblock[i][j][2] = currFrame3DArray[x + i][y + j][2];     // blue channel
+                        // to account for shortened macroblocks
+                        if (y + j < HEIGHT) {
+                            // assign the current pixel's RGB values to the current macroblock
+                            macroblock[i][j][0] = currFrame3DArray[x + i][y + j][0];     // red channel
+                            macroblock[i][j][1] = currFrame3DArray[x + i][y + j][1];     // green channel
+                            macroblock[i][j][2] = currFrame3DArray[x + i][y + j][2];     // blue channel
+                        }
                     }
                 }
 
@@ -378,3 +381,4 @@ public class MyEncoder {
         encoder.readFile();
     }
 }
+
