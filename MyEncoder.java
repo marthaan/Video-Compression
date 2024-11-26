@@ -19,15 +19,14 @@ public class MyEncoder {
     private static final int BLOCK_SIZE = 8;
     private static final int SEARCH_PARAMETER_K = 5;
     
-    private int[] prevFrame;
     private int[][][] prevFrame3DArray;
-    // don't think we need prevMacroblocks
-    private List<int[][][]> prevMacroblocks;
-
+    
     private int[] currFrame;
     private int[][][] currFrame3DArray;
     private List<int[][][]> currMacroblocks;
     private List<Integer> layers;
+
+    private File outputFile;
 
     /**
      * Constructor
@@ -40,11 +39,9 @@ public class MyEncoder {
         this.n1 = n1;
         this.n2 = n2;
 
-        prevFrame = new int[FRAME_SIZE];
-        prevMacroblocks = new ArrayList<>();
+        // initialize everything?
 
         currFrame = new int[FRAME_SIZE];
-        // initialize everything?
         currMacroblocks = new ArrayList<>();
     }
     
@@ -59,50 +56,18 @@ public class MyEncoder {
         try {
             FileInputStream fis = new FileInputStream(inputFile);
 
-            // got ahead of myself and wrote this output code... can uncomment this later
-            // make sure to also uncomment fos.close();
-            // create output file name by changing file.rgb to file.cmp
-/*          String fileName = inputFile.getName();
-            fileName.substring(0, fileName.length() - 3);
-            File outputFile = new File(fileName + "cmp");
-            FileOutputStream fos = new FileOutputStream(outputFile);
-            fos.write(n1);
-            fos.write(n2); */
-            
             for (int i = 0; readFrame(fis); i++) {
                 formatFrame();
+
                 // if not I-frame --> if P-frame
                 if (i != 0) {
-                    // PART 1: VIDEO SEGMENTATION
-                    // not sure if this is the best way to store all of this (maybe 1D is better) - but for now at least lines up all the info fine
-                    // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
-                    currMacroblocks = macroblock();             
-                    List<int[]> motionVectors = generateMotionVectorArray(currMacroblocks);
-                    List<Integer> layers = getLayers();
-
-                    // PART 2: COMPRESSION
-                    // List<int[][][]> blocks = block(currMacroblocks);
-                    // List<int[][][]> dctBlocks = dct(blocks);
-                    // List<int[][][]> quantizedBlocks = quantize(dctBlocks);  // quantize(n1, n2);
-                    // write to compressed file
-                    scan();
-                    // store in prevFrame:
-                    prevFrame = currFrame;
-                    prevMacroblocks = currMacroblocks;
+                    processPFrame();
                 }
                 // if I-frame
                 else {
-                    currMacroblocks = macroblock(); // still macroblock so compression steps can be the same
-                    // compress(currMacroblocks);
-                    // List<int[][][]> blocks = block(currMacroblocks);
-                    // List<int[][][]> dctBlocks = dct(blocks);
-                    // List<int[][][]> quantizedBlocks = quantize(dctBlocks);  // quantize with higher resolution (lower quantization step)
-                    // write to compressed file
-                    scan();
-                    // store in prevFrame:
-                    prevFrame = currFrame;
-                    prevMacroblocks = currMacroblocks;
+                    processIFrame();
                 }
+                
                 // DEBUG: displays progress
                 System.out.println("Frame processed:" + i);
             }
@@ -113,7 +78,6 @@ public class MyEncoder {
             }
 
             fis.close();
-            // fos.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -153,6 +117,51 @@ public class MyEncoder {
         }
 
         currFrame = tempArray;
+    }
+
+    /**
+     * Handles video segmentation and compression for an I-frame
+     */
+    private void processIFrame() {
+        // PART 1: VIDEO SEGMENTATION
+        // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
+        currMacroblocks = macroblock(); // still macroblock so compression steps can be the same
+        
+        // PART 2: COMPRESSION
+        compress(currMacroblocks);
+
+        // store in prevFrame:
+        prevFrame3DArray = currFrame3DArray;
+    }
+
+    /**
+     * Handles video segmentation and compression for a P-frame
+     */
+    private void processPFrame() {
+        // PART 1: VIDEO SEGMENTATION
+        // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
+        currMacroblocks = macroblock();             
+        List<int[]> motionVectors = generateMotionVectorArray(currMacroblocks);
+        List<Integer> layers = getLayers();
+
+        // PART 2: COMPRESSION
+        compress(currMacroblocks);
+
+        // store in prevFrame:
+        prevFrame3DArray = currFrame3DArray;
+    }
+
+    private void setupOutputFile() {
+        // create output file name by changing file.rgb to file.cmp
+        String fileName = inputFile.getName();
+        fileName.substring(0, fileName.length() - 3);
+
+        outputFile = new File(fileName + "cmp");
+        // FileOutputStream fos = new FileOutputStream(outputFile);
+        // fos.write(n1);
+        // fos.write(n2); 
+
+        // fos.close();
     }
 
     
@@ -218,9 +227,6 @@ public class MyEncoder {
     private List<int[]> generateMotionVectorArray(List<int[][][]> macroblocks) {
         // goal: macroblocks[i] has motion vector at motionVectors[i]
         List<int[]> motionVectors = new ArrayList<>(); // list of (dx, dy) vectors
-
-        // convert prevFrame to a 3D array -- needed for motion vector calculation
-        prevFrame3DArray = convertTo3DArray(prevFrame);
 
         // for each macroblock
         // compute that macroblock's motion vector and add to motionVectors
@@ -303,9 +309,8 @@ public class MyEncoder {
         return difference;
     }
 
-    // background macroblock --> motion vector = 0 (if camera is still), constant (if camera is moving)
-    // foreground macroblock --> motion vector = ?
-    // could do a boolean list or integer list using 1 = foreground, 2 = background for a macroblock
+    // foreground = 0; macroblock --> motion vector = ?
+    // background = 1; macroblock --> motion vector = 0 (if camera is still), constant (if camera is moving)
     private List<Integer> getLayers() {
         List<Integer> layers = new ArrayList<>();
 
@@ -318,10 +323,10 @@ public class MyEncoder {
         for (int i = 0; i < macroblocks.size(); i++) {
             List<int[][][]> blocks = block(macroblocks.get(i));
             List<int[][][]> dctBlocks = dct(blocks);
-            List<int[][][]> quantizedBlocks = quantize(dctBlocks, layers.get(i));  // (dctBlocks, layers[i]);
+            List<int[][][]> quantizedBlocks = quantize(dctBlocks, layers.get(i));
+            scanMacroblock(layers.get(i), quantizedBlocks);
         }
     }
-
 
     // divide each macroblock into 8x8 blocks for each frame
     private List<int[][][]> block(int[][][] macroblock) {
@@ -368,9 +373,10 @@ public class MyEncoder {
     }
 
     // scan blocks into output compressed file
-    private void scan() {
-
+    private void scanMacroblock(int layer, List<int[][][]> quantizedBlocks) {
+        
     }
+
 
     public static void main(String[]args) {
         File inputFile = new File(args[0]);
