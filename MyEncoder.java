@@ -19,11 +19,8 @@ public class MyEncoder {
     private static final int BLOCK_SIZE = 8;
     private static final int SEARCH_PARAMETER_K = 5;
     
-    private int[] prevFrame;
     private int[][][] prevFrame3DArray;
-    // don't think we need prevMacroblocks
-    private List<int[][][]> prevMacroblocks;
-
+    
     private int[] currFrame;
     private int[][][] currFrame3DArray;
     private List<int[][][]> currMacroblocks;
@@ -41,9 +38,6 @@ public class MyEncoder {
         this.inputFile = inputFile; 
         this.n1 = n1;
         this.n2 = n2;
-
-        prevFrame = new int[FRAME_SIZE];
-        prevMacroblocks = new ArrayList<>();
 
         currFrame = new int[FRAME_SIZE];
         // initialize everything?
@@ -72,6 +66,7 @@ public class MyEncoder {
                 else {
                     processIFrame();
                 }
+                
                 // DEBUG: displays progress
                 System.out.println("Frame processed:" + i);
             }
@@ -123,15 +118,19 @@ public class MyEncoder {
         currFrame = tempArray;
     }
 
+
     private void processIFrame() {
+        // PART 1: VIDEO SEGMENTATION
+        // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
         currMacroblocks = macroblock(); // still macroblock so compression steps can be the same
         compress(currMacroblocks);
-                    
+        
         // write to compressed file
+        setupOutputFile();            
         scan();
+
         // store in prevFrame:
-        prevFrame = currFrame;
-        prevMacroblocks = currMacroblocks;
+        prevFrame3DArray = currFrame3DArray;
     }
 
     private void processPFrame() {
@@ -143,11 +142,13 @@ public class MyEncoder {
 
         // PART 2: COMPRESSION
         compress(currMacroblocks);
+
         // write to compressed file
+        setupOutputFile(); 
         scan();
+
         // store in prevFrame:
-        prevFrame = currFrame;
-        prevMacroblocks = currMacroblocks;
+        prevFrame3DArray = currFrame3DArray;
     }
 
     
@@ -210,9 +211,6 @@ public class MyEncoder {
     private List<int[]> generateMotionVectorArray(List<int[][][]> macroblocks) {
         // goal: macroblocks[i] has motion vector at motionVectors[i]
         List<int[]> motionVectors = new ArrayList<>(); // list of (dx, dy) vectors
-
-        // convert prevFrame to a 3D array -- needed for motion vector calculation
-        prevFrame3DArray = convertTo3DArray(prevFrame);
 
         // for each macroblock
         // compute that macroblock's motion vector and add to motionVectors
@@ -309,7 +307,7 @@ public class MyEncoder {
         for (int i = 0; i < macroblocks.size(); i++) {
             List<int[][][]> blocks = block(macroblocks.get(i));
             List<int[][][]> dctBlocks = dct(blocks);
-            List<int[][][]> quantizedBlocks = quantize(dctBlocks, layers.get(i));  // (dctBlocks, layers[i]);
+            List<int[][][]> quantizedBlocks = quantize(dctBlocks, layers.get(i));
         }
     }
 
@@ -375,7 +373,7 @@ public class MyEncoder {
 
     }
 
-    
+
     public static void main(String[]args) {
         File inputFile = new File(args[0]);
         int n1 = Integer.parseInt(args[1]);
