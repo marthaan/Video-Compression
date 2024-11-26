@@ -247,6 +247,7 @@ public class MyEncoder {
         int topLeftY = i * MACROBLOCK_SIZE / WIDTH * MACROBLOCK_SIZE;
 
         int minDifference = Integer.MAX_VALUE;
+        
 
         // search from k to the left to k to the right
         for (int x = topLeftX - SEARCH_PARAMETER_K; x < topLeftX + SEARCH_PARAMETER_K; x++) {
