@@ -39,8 +39,9 @@ public class MyEncoder {
         this.n1 = n1;
         this.n2 = n2;
 
-        currFrame = new int[FRAME_SIZE];
         // initialize everything?
+
+        currFrame = new int[FRAME_SIZE];
         currMacroblocks = new ArrayList<>();
     }
     
@@ -54,7 +55,7 @@ public class MyEncoder {
     public void readFile() {
         try {
             FileInputStream fis = new FileInputStream(inputFile);
-            
+
             for (int i = 0; readFrame(fis); i++) {
                 formatFrame();
 
@@ -118,21 +119,24 @@ public class MyEncoder {
         currFrame = tempArray;
     }
 
-
+    /**
+     * Handles video segmentation and compression for an I-frame
+     */
     private void processIFrame() {
         // PART 1: VIDEO SEGMENTATION
         // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
         currMacroblocks = macroblock(); // still macroblock so compression steps can be the same
-        compress(currMacroblocks);
         
-        // write to compressed file
-        setupOutputFile();            
-        scan();
+        // PART 2: COMPRESSION
+        compress(currMacroblocks);
 
         // store in prevFrame:
         prevFrame3DArray = currFrame3DArray;
     }
 
+    /**
+     * Handles video segmentation and compression for a P-frame
+     */
     private void processPFrame() {
         // PART 1: VIDEO SEGMENTATION
         // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
@@ -143,12 +147,21 @@ public class MyEncoder {
         // PART 2: COMPRESSION
         compress(currMacroblocks);
 
-        // write to compressed file
-        setupOutputFile(); 
-        scan();
-
         // store in prevFrame:
         prevFrame3DArray = currFrame3DArray;
+    }
+
+    private void setupOutputFile() {
+        // create output file name by changing file.rgb to file.cmp
+        String fileName = inputFile.getName();
+        fileName.substring(0, fileName.length() - 3);
+
+        outputFile = new File(fileName + "cmp");
+        // FileOutputStream fos = new FileOutputStream(outputFile);
+        // fos.write(n1);
+        // fos.write(n2); 
+
+        // fos.close();
     }
 
     
@@ -292,9 +305,8 @@ public class MyEncoder {
         return difference;
     }
 
-    // background macroblock --> motion vector = 0 (if camera is still), constant (if camera is moving)
-    // foreground macroblock --> motion vector = ?
-    // could do a boolean list or integer list using 1 = foreground, 2 = background for a macroblock
+    // foreground = 0; macroblock --> motion vector = ?
+    // background = 1; macroblock --> motion vector = 0 (if camera is still), constant (if camera is moving)
     private List<Integer> getLayers() {
         List<Integer> layers = new ArrayList<>();
 
@@ -308,6 +320,7 @@ public class MyEncoder {
             List<int[][][]> blocks = block(macroblocks.get(i));
             List<int[][][]> dctBlocks = dct(blocks);
             List<int[][][]> quantizedBlocks = quantize(dctBlocks, layers.get(i));
+            scanMacroblock(layers.get(i), quantizedBlocks);
         }
     }
 
@@ -355,22 +368,9 @@ public class MyEncoder {
         return quantizedBlocks;
     }
 
-    private void setupOutputFile() {
-        // create output file name by changing file.rgb to file.cmp
-        String fileName = inputFile.getName();
-        fileName.substring(0, fileName.length() - 3);
-
-        outputFile = new File(fileName + "cmp");
-        // FileOutputStream fos = new FileOutputStream(outputFile);
-        // fos.write(n1);
-        // fos.write(n2); 
-
-        // fos.close();
-    }
-
     // scan blocks into output compressed file
-    private void scan() {
-
+    private void scanMacroblock(int layer, List<int[][][]> quantizedBlocks) {
+        
     }
 
 
