@@ -29,6 +29,8 @@ public class MyEncoder {
     private List<int[][][]> currMacroblocks;
     private List<Integer> layers;
 
+    private File outputFile;
+
     /**
      * Constructor
      * @param inputFile input .rgb file for each instance
@@ -61,7 +63,7 @@ public class MyEncoder {
             
             for (int i = 0; readFrame(fis); i++) {
                 formatFrame();
-                
+
                 // if not I-frame --> if P-frame
                 if (i != 0) {
                     processPFrame();
@@ -80,7 +82,6 @@ public class MyEncoder {
             }
 
             fis.close();
-            // fos.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -357,15 +358,16 @@ public class MyEncoder {
     }
 
     private void setupOutputFile() {
-            // got ahead of myself and wrote this output code... can uncomment this later
-            // make sure to also uncomment fos.close();
-            // create output file name by changing file.rgb to file.cmp
-/*          String fileName = inputFile.getName();
-            fileName.substring(0, fileName.length() - 3);
-            File outputFile = new File(fileName + "cmp");
-            FileOutputStream fos = new FileOutputStream(outputFile);
-            fos.write(n1);
-            fos.write(n2); */
+        // create output file name by changing file.rgb to file.cmp
+        String fileName = inputFile.getName();
+        fileName.substring(0, fileName.length() - 3);
+
+        outputFile = new File(fileName + "cmp");
+        // FileOutputStream fos = new FileOutputStream(outputFile);
+        // fos.write(n1);
+        // fos.write(n2); 
+
+        // fos.close();
     }
 
     // scan blocks into output compressed file
@@ -373,6 +375,7 @@ public class MyEncoder {
 
     }
 
+    
     public static void main(String[]args) {
         File inputFile = new File(args[0]);
         int n1 = Integer.parseInt(args[1]);
