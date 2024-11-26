@@ -47,7 +47,6 @@ public class MyEncoder {
     
 
     // ----- PART 0: PRE-PROCESS FILE DATA -----
-    // TEST
     
     /**
      * Reads the entire .rgb file frame-by-frame
