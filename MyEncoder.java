@@ -58,50 +58,17 @@ public class MyEncoder {
     public void readFile() {
         try {
             FileInputStream fis = new FileInputStream(inputFile);
-
-            // got ahead of myself and wrote this output code... can uncomment this later
-            // make sure to also uncomment fos.close();
-            // create output file name by changing file.rgb to file.cmp
-/*          String fileName = inputFile.getName();
-            fileName.substring(0, fileName.length() - 3);
-            File outputFile = new File(fileName + "cmp");
-            FileOutputStream fos = new FileOutputStream(outputFile);
-            fos.write(n1);
-            fos.write(n2); */
             
             for (int i = 0; readFrame(fis); i++) {
                 formatFrame();
+                
                 // if not I-frame --> if P-frame
                 if (i != 0) {
-                    // PART 1: VIDEO SEGMENTATION
-                    // not sure if this is the best way to store all of this (maybe 1D is better) - but for now at least lines up all the info fine
-                    // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
-                    currMacroblocks = macroblock();             
-                    List<int[]> motionVectors = generateMotionVectorArray(currMacroblocks);
-                    List<Integer> layers = getLayers();
-
-                    // PART 2: COMPRESSION
-                    // List<int[][][]> blocks = block(currMacroblocks);
-                    // List<int[][][]> dctBlocks = dct(blocks);
-                    // List<int[][][]> quantizedBlocks = quantize(dctBlocks);  // quantize(n1, n2);
-                    // write to compressed file
-                    scan();
-                    // store in prevFrame:
-                    prevFrame = currFrame;
-                    prevMacroblocks = currMacroblocks;
+                    processPFrame();
                 }
                 // if I-frame
                 else {
-                    currMacroblocks = macroblock(); // still macroblock so compression steps can be the same
-                    // compress(currMacroblocks);
-                    // List<int[][][]> blocks = block(currMacroblocks);
-                    // List<int[][][]> dctBlocks = dct(blocks);
-                    // List<int[][][]> quantizedBlocks = quantize(dctBlocks);  // quantize with higher resolution (lower quantization step)
-                    // write to compressed file
-                    scan();
-                    // store in prevFrame:
-                    prevFrame = currFrame;
-                    prevMacroblocks = currMacroblocks;
+                    processIFrame();
                 }
                 // DEBUG: displays progress
                 System.out.println("Frame processed:" + i);
@@ -153,6 +120,33 @@ public class MyEncoder {
         }
 
         currFrame = tempArray;
+    }
+
+    private void processIFrame() {
+        currMacroblocks = macroblock(); // still macroblock so compression steps can be the same
+        compress(currMacroblocks);
+                    
+        // write to compressed file
+        scan();
+        // store in prevFrame:
+        prevFrame = currFrame;
+        prevMacroblocks = currMacroblocks;
+    }
+
+    private void processPFrame() {
+        // PART 1: VIDEO SEGMENTATION
+        // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
+        currMacroblocks = macroblock();             
+        List<int[]> motionVectors = generateMotionVectorArray(currMacroblocks);
+        List<Integer> layers = getLayers();
+
+        // PART 2: COMPRESSION
+        compress(currMacroblocks);
+        // write to compressed file
+        scan();
+        // store in prevFrame:
+        prevFrame = currFrame;
+        prevMacroblocks = currMacroblocks;
     }
 
     
@@ -318,7 +312,6 @@ public class MyEncoder {
         }
     }
 
-
     // divide each macroblock into 8x8 blocks for each frame
     private List<int[][][]> block(int[][][] macroblock) {
         List<int[][][]> blocks = new ArrayList<>();
@@ -361,6 +354,18 @@ public class MyEncoder {
         }
 
         return quantizedBlocks;
+    }
+
+    private void setupOutputFile() {
+            // got ahead of myself and wrote this output code... can uncomment this later
+            // make sure to also uncomment fos.close();
+            // create output file name by changing file.rgb to file.cmp
+/*          String fileName = inputFile.getName();
+            fileName.substring(0, fileName.length() - 3);
+            File outputFile = new File(fileName + "cmp");
+            FileOutputStream fos = new FileOutputStream(outputFile);
+            fos.write(n1);
+            fos.write(n2); */
     }
 
     // scan blocks into output compressed file
