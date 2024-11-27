@@ -319,6 +319,10 @@ public class MyEncoder {
 
 
     // ----- PART 2: COMPRESSION -----
+    /**
+     * Carries out compression steps 
+     * @param macroblocks
+     */
     private void compress(List<int[][][]> macroblocks) {
         for (int i = 0; i < macroblocks.size(); i++) {
             List<int[][][]> blocks = block(macroblocks.get(i));
@@ -328,7 +332,11 @@ public class MyEncoder {
         }
     }
 
-    // divide each macroblock into 8x8 blocks for each frame
+    /**
+     * Divides each macroblock into four 8x8 blocks (for each frame)
+     * @param macroblock
+     * @return
+     */
     private List<int[][][]> block(int[][][] macroblock) {
         List<int[][][]> blocks = new ArrayList<>();
 
@@ -355,18 +363,100 @@ public class MyEncoder {
 
     private List<int[][][]> dct(List<int[][][]> blocks) {
         List<int[][][]> dctBlocks = new ArrayList<>();
+        
+        for (int[][][] block : blocks) {
+            // frequency coefficients for the current block
+            int[][][] dctBlock = new int[BLOCK_SIZE][BLOCK_SIZE][3];
+
+            // iterate over rows and cols of the block
+            for (int u = 0; u < BLOCK_SIZE; u++) {
+                for (int v = 0; v < BLOCK_SIZE; v++) {
+                    double dctRed = calculateDct(u, v, block, 0);
+                    double dctGreen = calculateDct(u, v, block, 1);
+                    double dctBlue = calculateDct(u, v, block, 2);
+
+                    dctBlock[u][v][0] = (int) Math.round(dctRed);
+                    dctBlock[u][v][1] = (int) Math.round(dctGreen);
+                    dctBlock[u][v][2] = (int) Math.round(dctBlue);
+                }
+            }
+
+            dctBlocks.add(dctBlock);
+        }
 
         return dctBlocks;
+    }
+
+    private double calculateDct(int u, int v, int[][][] block, int channel) {
+        double dct = 0.0;
+        
+        double sum = 0.0;
+
+        double[] scalars = getScalars(u, v);
+        double scalar = (1.0 / 4.0) * scalars[0] * scalars[1];
+
+        for (int x = 0; x < BLOCK_SIZE; x++) {
+            for (int y = 0; y < BLOCK_SIZE; y++) {
+                sum += block[x][y][channel] * Math.cos(((2 * x + 1) * u * Math.PI) / (2 * BLOCK_SIZE)) * 
+                    Math.cos(((2 * y + 1) * v * Math.PI) / (2 * BLOCK_SIZE));
+            }
+        }
+
+        dct = scalar * sum;
+
+        return dct;
+    }
+
+    /** getScalars
+    * Calculates scalars needed for DCT formulas
+    * @param u current u index
+    * @param v current v index
+    * @return scalars
+    */
+    private double[] getScalars(int u, int v) {
+        double[] scalars = new double[2];
+
+        scalars[0] = 1.0;
+        scalars[1] = 1.0;
+
+        if (u == 0) {
+            scalars[0] *= (1.0 / Math.sqrt(2));
+        }
+        if (v == 0) {
+            scalars[1] *= (1.0 / Math.sqrt(2));
+        }
+
+        return scalars;
     }
 
     private List<int[][][]> quantize(List<int[][][]> dctBlocks, int layer) {
         List<int[][][]> quantizedBlocks = new ArrayList<>();
 
-        if (layer == 0) {   // if foreground
-            // use n1
+        int step = 0;
+        
+        // if foreground block
+        if (layer == 0) {   
+            step = n1;
+            
         }
-        else {  // if background
-            // use n2
+        // if background block
+        else {  
+            step = n2;
+        }
+
+        // iterate over each pixel & quantize each of its channel values
+        for (int[][][] dctBlock : dctBlocks) {
+            int[][][] quantizedBlock = new int[BLOCK_SIZE][BLOCK_SIZE][3];
+            
+            for (int x = 0; x < BLOCK_SIZE; x++) {
+                for (int y = 0; y < BLOCK_SIZE; y++) {
+                    quantizedBlock[x][y][0] = (int) Math.round(dctBlock[x][y][0] / step);   // red / step
+                    quantizedBlock[x][y][1] = (int) Math.round(dctBlock[x][y][1] / step);   // green / step
+                    quantizedBlock[x][y][2] = (int) Math.round(dctBlock[x][y][2] / step);   // blue / step
+                }
+            }
+
+            quantizedBlocks.add(quantizedBlock);
         }
 
         return quantizedBlocks;
@@ -374,7 +464,10 @@ public class MyEncoder {
 
     // scan blocks into output compressed file
     private void scanMacroblock(int layer, List<int[][][]> quantizedBlocks) {
-        
+        for (int[][][] quantizedBlock : quantizedBlocks) {
+            // write each layer to output file
+            // write each row to output file 
+        }
     }
 
 
@@ -386,6 +479,9 @@ public class MyEncoder {
         MyEncoder encoder = new MyEncoder(inputFile, n1, n2);
 
         encoder.readFile();
+
+        // DEBUG: prints when output file is complete
+        System.out.println("SUCCESS");
     }
 }
 
