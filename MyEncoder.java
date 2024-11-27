@@ -4,6 +4,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 public class MyEncoder {
     private File inputFile; // input file for each instance 
@@ -18,12 +20,17 @@ public class MyEncoder {
     private static final int MACROBLOCK_SIZE = 16;
     private static final int BLOCK_SIZE = 8;
     private static final int SEARCH_PARAMETER_K = 5;
+    // this variable denotes the amount of variance allowed in choosing which macroblocks are background macroblocks
+    // it should stay between zero (meaning the motion vector must match the most common motion vector exactly)
+    // to, at maximum, SEARCH_PARAMETER_K
+    private static final int ALLOWED_VECTOR_ERROR = 1;
     
     private int[][][] prevFrame3DArray;
     
     private int[] currFrame;
     private int[][][] currFrame3DArray;
     private List<int[][][]> currMacroblocks;
+    private List<int[]> motionVectors;
     private List<Integer> layers;
 
     private File outputFile;
@@ -42,7 +49,10 @@ public class MyEncoder {
         // initialize everything?
 
         currFrame = new int[FRAME_SIZE];
+        currFrame3DArray = new int[WIDTH][HEIGHT][3];
         currMacroblocks = new ArrayList<>();
+        motionVectors = new ArrayList<>();
+        layers = new ArrayList<>();
     }
     
 
@@ -127,6 +137,7 @@ public class MyEncoder {
         // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
         currMacroblocks = macroblock(); // still macroblock so compression steps can be the same
         
+        
         // PART 2: COMPRESSION
         compress(currMacroblocks);
 
@@ -141,8 +152,8 @@ public class MyEncoder {
         // PART 1: VIDEO SEGMENTATION
         // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
         currMacroblocks = macroblock();             
-        List<int[]> motionVectors = generateMotionVectorArray(currMacroblocks);
-        List<Integer> layers = getLayers();
+        motionVectors = generateMotionVectorArray(currMacroblocks);
+        layers = getLayers();
 
         // PART 2: COMPRESSION
         compress(currMacroblocks);
@@ -226,7 +237,6 @@ public class MyEncoder {
     // will need current macroblocks and prevFrame
     private List<int[]> generateMotionVectorArray(List<int[][][]> macroblocks) {
         // goal: macroblocks[i] has motion vector at motionVectors[i]
-        List<int[]> motionVectors = new ArrayList<>(); // list of (dx, dy) vectors
 
         // for each macroblock
         // compute that macroblock's motion vector and add to motionVectors
@@ -261,7 +271,7 @@ public class MyEncoder {
             while (x < 0) {
                 x++;
             }
-            if (x >= WIDTH - MACROBLOCK_SIZE) {
+            if (x > WIDTH - MACROBLOCK_SIZE) {
                 break;
             }
             // search from k up to k down
@@ -270,12 +280,25 @@ public class MyEncoder {
                 while (y < 0) {
                     y++;
                 }
-                if (y >= HEIGHT - MACROBLOCK_SIZE) {
+                // this number intentionally does not include the fractional macroblocks
+                int numWholeMacroblocksHigh = HEIGHT / MACROBLOCK_SIZE;
+                if (y > numWholeMacroblocksHigh * MACROBLOCK_SIZE) {
                     break;
                 }
+
+                // dealing with fractional macroblocks
+                int numMacroblocksWide = WIDTH / MACROBLOCK_SIZE;
+                // this number also does not include fractional macroblocks
+                int numWholeMacroblocks = numWholeMacroblocksHigh * numMacroblocksWide;
+                int currMacroblockHeight = MACROBLOCK_SIZE;
+                // if we're dealing with a fractional macroblock
+                if (i >= numWholeMacroblocks) {
+                    currMacroblockHeight = HEIGHT - (numWholeMacroblocksHigh * MACROBLOCK_SIZE);
+                }
+
                 // compare macroblocks
                 // if this is the smallest difference we have found so far, save that motion vector in vector
-                int difference = compareMacroblocks(currMacroblocks.get(i), x, y);
+                int difference = compareMacroblocks(currMacroblocks.get(i), x, y, currMacroblockHeight);
                 
                 if (difference < minDifference) {
                     vector[0] = x - topLeftX;
@@ -295,13 +318,13 @@ public class MyEncoder {
      * @param y y-value of top left pixel of macroblock-sized area we're comparing with in prevFrame
      * @return integer representing the total difference between the two macroblocks
      */
-    private int compareMacroblocks(int[][][] currMacroblock, int topLeftX, int topLeftY) {
+    private int compareMacroblocks(int[][][] currMacroblock, int topLeftX, int topLeftY, int currMacroblockHeight) {
         int difference = 0;
 
         // find the absolute value of the difference between each r pixel in currMacroblock and its
         // corresponding r pixel in prevFrame3DArray
         for (int x = 0; x < MACROBLOCK_SIZE; x++) {
-            for (int y = 0; y < MACROBLOCK_SIZE; y++) {
+            for (int y = 0; y < currMacroblockHeight; y++) {
                 difference += Math.abs(currMacroblock[x][y][0] - prevFrame3DArray[topLeftX+x][topLeftY+y][0]);
             }
         }
@@ -312,9 +335,62 @@ public class MyEncoder {
     // foreground = 0; macroblock --> motion vector = ?
     // background = 1; macroblock --> motion vector = 0 (if camera is still), constant (if camera is moving)
     private List<Integer> getLayers() {
-        List<Integer> layers = new ArrayList<>();
+        layers = new ArrayList<Integer>();
+
+        int[] mostCommonVector = findMostCommonVector(motionVectors);
+
+        for (int i = 0; i < motionVectors.size(); i++) {
+            // if the current motionVector is within the allowed error range from the mostCommonVector
+            if (motionVectors.get(i)[0] < mostCommonVector[0] + ALLOWED_VECTOR_ERROR &&
+                motionVectors.get(i)[0] > mostCommonVector[0] - ALLOWED_VECTOR_ERROR &&
+                motionVectors.get(i)[1] < mostCommonVector[1] + ALLOWED_VECTOR_ERROR &&
+                motionVectors.get(i)[1] > mostCommonVector[1] - ALLOWED_VECTOR_ERROR) {
+                    // macroblock i is a background block (layers[i] = 1)
+                    layers.add(1);
+            }
+            else {
+                // macroblock i is a foreground block (layers[i] = 0)
+                layers.add(0);
+            }
+        }
+
+        // now check layers to make sure foreground elements are contiguous
+        layers = checkContiguous(layers);
 
         return layers;
+    }
+
+    private List<Integer> checkContiguous(List<Integer> layers) {
+        for (int i = 0; i < layers.size(); i++) {
+            // ceil function accounts for fractional macroblocks, so 33.75 macroblocks becomes 34
+            int numMacroblocksWide = (int)Math.ceil(WIDTH / (double)MACROBLOCK_SIZE);
+            int numMacroblocksHigh = (int)Math.ceil(HEIGHT / (double)MACROBLOCK_SIZE);
+            
+            // if the macroblock above, below, left, and right are all background, then this macroblock is background
+        }
+        return layers;
+    }
+
+    private int[] findMostCommonVector(List<int[]> motionVectors) {
+        // make a hashmap where (key = vector, value = frequency)
+        HashMap<int[], Integer> vectorFrequencies = new HashMap<>();
+
+        for (int[] vector : motionVectors) {
+            // if vector is new, make a new entry (vector, 1)
+            // if vector already exists in map, add 1 to its value
+            vectorFrequencies.put(vector, vectorFrequencies.getOrDefault(vector, 0)+1);
+        }
+
+        int[] mostCommon = new int[2];
+        int maxFrequency = 0;
+        for (Map.Entry<int[],Integer> entry : vectorFrequencies.entrySet()) {
+            if (entry.getValue() > maxFrequency) {
+                mostCommon = entry.getKey();
+                maxFrequency = entry.getValue();
+            }
+        }
+
+        return mostCommon;
     }
 
 

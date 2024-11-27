@@ -45,3 +45,6 @@ Notes:
                 Have not tested computeMotionVector stuff
                 Also, I'm getting an error where the file name should be MyEncoder not myEncoder but
                 I'm scared to change the name because of git reasons lol can you do that
+
+11/27/24 Greg:  Think I fixed some computeMotionVector bugs related to the fractional macroblocks
+                Still need to implement checkContiguous and scanMacroblock
