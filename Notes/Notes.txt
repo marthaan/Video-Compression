@@ -52,3 +52,5 @@ Notes:
 
 11/27/24 Greg:  Implemented checkContiguous but layers code seems to not be working
                 Maybe because mostCommonVector or computeMotionVector is not working
+
+12/4/24 Greg: Fixed getLayers, mostCommonVector, and computeMotionVector -- everything should be working now except writing to a file
