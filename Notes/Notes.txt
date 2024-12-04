@@ -48,3 +48,7 @@ Notes:
 
 11/27/24 Greg:  Think I fixed some computeMotionVector bugs related to the fractional macroblocks
                 Still need to implement checkContiguous and scanMacroblock
+                Need to test getLayers
+
+11/27/24 Greg:  Implemented checkContiguous but layers code seems to not be working
+                Maybe because mostCommonVector or computeMotionVector is not working
