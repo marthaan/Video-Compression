@@ -1,0 +1,22 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "java",
+			"name": "Current File",
+			"request": "launch",
+			"mainClass": "${file}",
+		},
+		{
+			"type": "java",
+			"name": "MyEncoder",
+			"request": "launch",
+			"mainClass": "MyEncoder",
+			"projectName": "VideoCompression_da3e0023",
+			"args": "../video/rgbs/WalkingStaticBackground.rgb 1 2"
+		}
+	]
+}
