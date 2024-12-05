@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.Random;
+
 public class MyEncoder {
     private File inputFile; // input file for each instance 
     private int n1;         // foreground quantization step
