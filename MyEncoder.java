@@ -13,10 +13,11 @@ public class MyEncoder {
     private int n1;         // foreground quantization step
     private int n2;         // background quantization step
 
-    private static final int WIDTH = 960;                       // width of each frame
-    private static final int HEIGHT = 540;                      // height of each frame
-    private static final int CHANNEL_SIZE = WIDTH * HEIGHT;     // 518,400 bytes per channel (per frame)
-    private static final int FRAME_SIZE = CHANNEL_SIZE * 3;     // 1,555,200 total bytes per frame
+    private static final int WIDTH = 960;                                   // width of each frame
+    private static final int HEIGHT = 540;                                  // height of each frame
+    private static final int NUM_CHANNELS = 3;                              // r + g + b = 3
+    private static final int CHANNEL_SIZE = WIDTH * HEIGHT;                 // 518,400 bytes per channel (per frame)
+    private static final int FRAME_SIZE = CHANNEL_SIZE * NUM_CHANNELS;     // 1,555,200 total bytes per frame
 
     private static final int MACROBLOCK_SIZE = 16;
     private static final int BLOCK_SIZE = 8;
@@ -316,7 +317,6 @@ public class MyEncoder {
                 }
             }
         }
-        
 
         return vector;
     }
@@ -412,8 +412,7 @@ public class MyEncoder {
 
         return layers;
     }
-
-
+  
     private int[] findMostCommonVector(List<int[]> motionVectors) {
         // make a hashmap where (key = vector, value = frequency)
         HashMap<List<Integer>, Integer> vectorFrequencies = new HashMap<>();
@@ -443,6 +442,7 @@ public class MyEncoder {
 
 
     // ----- PART 2: COMPRESSION -----
+    
     /**
      * Carries out compression steps 
      * @param macroblocks
@@ -473,8 +473,8 @@ public class MyEncoder {
                 for (int i = 0; i < BLOCK_SIZE; i++) {
                     for (int j = 0; j < BLOCK_SIZE; j++) {
                         block[i][j][0] = macroblock[x + i][y + j][0];
-                        block[i][j][1] = macroblock[x + i][y + j][1];
-                        block[i][j][2] = macroblock[x + i][y + j][2];
+                        block[i][j][0] = macroblock[x + i][y + j][1];
+                        block[i][j][0] = macroblock[x + i][y + j][2];
                     }
                 }
 
