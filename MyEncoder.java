@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.util.Random;
-
 public class MyEncoder {
     private File inputFile; // input file for each instance 
     private int n1;         // foreground quantization step
@@ -26,7 +24,7 @@ public class MyEncoder {
     
     private int[] currFrame;
     private int[][][] currFrame3DArray;
-    private List<int[][][]> currMacroblocks;
+    private List<int[][][]> currMacroblocks;    // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
     private List<Integer> layers;
 
     private File outputFile;
@@ -127,13 +125,12 @@ public class MyEncoder {
      */
     private void processIFrame() {
         // PART 1: VIDEO SEGMENTATION
-        // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
         currMacroblocks = macroblock(); // still macroblock so compression steps can be the same
         
         // PART 2: COMPRESSION
         compress(currMacroblocks);
 
-        // store in prevFrame:
+        // store prevFrame data:
         prevFrame3DArray = currFrame3DArray;
     }
 
@@ -142,7 +139,6 @@ public class MyEncoder {
      */
     private void processPFrame() {
         // PART 1: VIDEO SEGMENTATION
-        // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
         currMacroblocks = macroblock();             
         List<int[]> motionVectors = generateMotionVectorArray(currMacroblocks);
         List<Integer> layers = getLayers();
@@ -150,7 +146,7 @@ public class MyEncoder {
         // PART 2: COMPRESSION
         compress(currMacroblocks);
 
-        // store in prevFrame:
+        // store prevFrame data:
         prevFrame3DArray = currFrame3DArray;
     }
 
@@ -180,18 +176,18 @@ public class MyEncoder {
         currFrame3DArray = convertTo3DArray(currFrame);
 
         // iterate over frame macroblock-by-macroblock
-        for (int x = 0; x < WIDTH; x += MACROBLOCK_SIZE) {
-            for (int y = 0; y < HEIGHT; y += MACROBLOCK_SIZE) {
+        for (int row = 0; row < HEIGHT; row += MACROBLOCK_SIZE) {
+            for (int col = 0; col < WIDTH; col += MACROBLOCK_SIZE) {
                 // create the current 16x16 macroblock to hold RGB channel data
                 int[][][] macroblock = new int[MACROBLOCK_SIZE][MACROBLOCK_SIZE][3];
                 
                 // iterate over each pixel within the current macroblock
-                for (int i = 0; i < MACROBLOCK_SIZE; i++) {
-                    for (int j = 0; j < MACROBLOCK_SIZE; j++) {
+                for (int r = 0; r < MACROBLOCK_SIZE; r++) {
+                    for (int c = 0; c < MACROBLOCK_SIZE; c++) {
                         // assign the current pixel's RGB values to the current macroblock
-                        macroblock[i][j][0] = currFrame3DArray[x + i][y + j][0];     // red channel
-                        macroblock[i][j][1] = currFrame3DArray[x + i][y + j][1];     // green channel
-                        macroblock[i][j][2] = currFrame3DArray[x + i][y + j][2];     // blue channel
+                        macroblock[r][c][0] = currFrame3DArray[row + r][col + c][0];     // red channel
+                        macroblock[r][c][1] = currFrame3DArray[row + r][col + c][1];     // green channel
+                        macroblock[r][c][2] = currFrame3DArray[row + r][col + c][2];     // blue channel
                     }
                 }
 
@@ -318,6 +314,7 @@ public class MyEncoder {
 
 
     // ----- PART 2: COMPRESSION -----
+    
     /**
      * Carries out compression steps 
      * @param macroblocks
