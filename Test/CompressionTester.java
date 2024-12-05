@@ -9,7 +9,7 @@ public class CompressionTester {
     
     private static final int MACROBLOCK_SIZE = 4;
     private static final int BLOCK_SIZE = 2;
-    private static final int CHANNEL_SIZE = 3;
+    private static final int NUM_CHANNELS = 3;
     
     // create a 16x16x3 macroblock with random values
     private int[][][] makeRandomMacroblock() {
@@ -18,7 +18,7 @@ public class CompressionTester {
 
         for (int x = 0; x < MACROBLOCK_SIZE; x++) {
             for (int y = 0; y < MACROBLOCK_SIZE; y++) {
-                for (int z = 0; z < CHANNEL_SIZE; z++) {
+                for (int z = 0; z < NUM_CHANNELS; z++) {
                     macroblock[x][y][z] = random.nextInt(256); // Random value in [0, 255]
                 }
             }
@@ -35,7 +35,7 @@ public class CompressionTester {
             for (int col = 0; col < block[0].length; col++) {
                 System.out.print("[");
                 
-                for (int channel = 0; channel < CHANNEL_SIZE; channel++) {
+                for (int channel = 0; channel < NUM_CHANNELS; channel++) {
                     System.out.print(block[row][col][channel] + (channel < 2 ? ", " : ""));
                 }
                 
@@ -64,7 +64,7 @@ public class CompressionTester {
         // iterate over the whole macroblock, block-by-block
         for (int row = 0; row < MACROBLOCK_SIZE; row += BLOCK_SIZE) {
             for (int col = 0; col < MACROBLOCK_SIZE; col += BLOCK_SIZE) {
-                int[][][] block = new int[BLOCK_SIZE][BLOCK_SIZE][CHANNEL_SIZE];
+                int[][][] block = new int[BLOCK_SIZE][BLOCK_SIZE][NUM_CHANNELS];
 
                 // iterate within each smaller block
                 for (int r = 0; r < BLOCK_SIZE; r++) {
@@ -88,7 +88,7 @@ public class CompressionTester {
         
         for (int[][][] block : blocks) {
             // frequency coefficients for the current block
-            int[][][] dctBlock = new int[BLOCK_SIZE][BLOCK_SIZE][3];
+            int[][][] dctBlock = new int[BLOCK_SIZE][BLOCK_SIZE][NUM_CHANNELS];
 
             // iterate over rows and cols of the block
             for (int u = 0; u < BLOCK_SIZE; u++) {
