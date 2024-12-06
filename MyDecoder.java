@@ -4,24 +4,27 @@ import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 
+
 public class MyDecoder {
     File encoderFile;       // input file
+    String audioPath;       // path to Media object --> may change to set up Media object here
     int n1;                 // foreground quantization step
     int n2;                 // background quantization step
     
     private static final int WIDTH = 960;                       // width of each frame
     private static final int HEIGHT = 540;                      // height of each frame
     private static final int NUM_CHANNELS = 3;                  // r + g + b = 3
-    private static final int MACROBLOCKS_PER_FRAME = 2040;      // 60 per row x 33.75 per col
+    private static final int MACROBLOCKS_PER_FRAME = 2040;      // 60 per row x 33.75 per col ~= 2040
 
     private static final int MACROBLOCK_SIZE = 16;
     private static final int BLOCK_SIZE = 8;
 
-    // List<int[][][]> currMacroblocks;
+    // List<List<int[][][]>> currMacroblocks;   // list of macroblocks for curr frame, with each macroblock = list of its blocks
 
     // constructor
-    public MyDecoder(File encoderFile) {
+    public MyDecoder(File encoderFile, String audioPath) {
         this.encoderFile = encoderFile;
+        this.audioPath = audioPath;
 
         this.n1 = 0;
         this.n2 = 0; 
@@ -41,14 +44,19 @@ public class MyDecoder {
 
             // we compressed one frame at a time, by compressing one macroblock at a time
 
-            // process one frame at a time --> loop until all frames processed
-
             // for each frame:
             // get list of blocks per macroblock 
+                // 4 blocks = 1 macroblock
+                // get data of all 8x8 blocks for each frame --> get layer type, get coefficients
+             
             // get list of macroblocks
+                // macroblocks per frame = 2040
 
-            // get data of all 8x8 blocks for each frame --> get layer type, get coefficients
-            readBlocks(fis); // make loop 
+            
+            // process one frame at a time --> loop until all frames processed
+            for (int i = 0; readBlocks(fis); i++) {
+
+            }
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -71,9 +79,19 @@ public class MyDecoder {
 
     // ----- PART3: decompression -----
 
-    // decompress driver method? to decompress each macroblock 
-    private void decompress() {
-        // for each macroblock: dequantize, idct, etc.
+    // decompress driver method
+    // decompress each macroblock = list of its blocks
+    private void decompress(List<List<int[][][]>> macroblocks) {   
+        // for each macroblock: 
+        // dequantize
+        // idct
+        // etc.
+
+        for (int i = 0; i < macroblocks.size(); i++) {
+            List<int[][][]> dequantizedBlocks = dequantize(macroblocks.get(i), 0);  // placeholder blockType
+            List<int[][][]> idctBlocks = idct(dequantizedBlocks);
+            scanMacroblock(idctBlocks);
+        }
     }
 
     // dequantize --> multiply each coeff. by 2^step
@@ -182,18 +200,25 @@ public class MyDecoder {
 
     // may need to unblock / format for display first?
     // unblock into a frame to display each frame at a time?
+    // output to a .rgb file to send to AudioVideoPlayer
+    private void scanMacroblock(List<int[][][]> idctBlocks) {
+
+    }
 
 
-    // display
-    private void display() {
+    // display --> calls AudioVideoPlayer.java 
+    // will need to display input video and output video 
+        // want to be able to see OG video vs. compressed-decompressed video 
+    private void display(File rgbFile) {
 
     }
 
 
     public static void main(String[] args) {
-        File encoderFile = new File(args[0]);     // only input = MyEncoder output file 
+        File encoderFile = new File(args[0]);   // input = MyEncoder .cmp output file 
+        String audioPath = args[1];         // input = MP3 audio file --> store just path for now
 
-        MyDecoder decoder = new MyDecoder(encoderFile);
+        MyDecoder decoder = new MyDecoder(encoderFile, audioPath);
 
         decoder.parseFile();
     }
