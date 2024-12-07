@@ -568,12 +568,12 @@ public class MyEncoder {
         
         // if foreground block
         if (layer == 0) {   
-            step = n1;
+            step = (int) Math.round(Math.pow(2, n1));
             
         }
         // if background block
         else {  
-            step = n2;
+            step = (int) Math.round(Math.pow(2, n2));
         }
 
         // iterate over each pixel & quantize each of its channel values
