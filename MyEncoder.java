@@ -180,8 +180,6 @@ public class MyEncoder {
             
             writer.write(String.valueOf(n1) + " ");
             writer.write(String.valueOf(n2) + "\n");
-
-
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -462,7 +460,7 @@ public class MyEncoder {
             List<int[][][]> blocks = block(macroblocks.get(i));
             List<int[][][]> dctBlocks = dct(blocks);
             List<int[][][]> quantizedBlocks = quantize(dctBlocks, layers.get(i));
-            scanMacroblock(layers.get(i), quantizedBlocks);
+            writeMacroblock(layers.get(i), quantizedBlocks);
         }
     }
 
@@ -597,7 +595,7 @@ public class MyEncoder {
     }
 
     // scan blocks into output compressed file
-    private void scanMacroblock(int layer, List<int[][][]> quantizedBlocks) {
+    private void writeMacroblock(int layer, List<int[][][]> quantizedBlocks) {
         for (int[][][] quantizedBlock : quantizedBlocks) {
             // write each layer to output file
             // write each row to output file 
