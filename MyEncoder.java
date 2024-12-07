@@ -1,6 +1,5 @@
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -8,7 +7,6 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
-import java.io.Writer;
 import java.io.BufferedWriter;
 
 public class MyEncoder {
@@ -69,6 +67,8 @@ public class MyEncoder {
      */
     public void readFile() {
         try {
+            setupOutputFile();  // needs to be done before frames are processed
+            
             FileInputStream fis = new FileInputStream(inputFile);
 
             for (int i = 0; readFrame(fis); i++) {
@@ -181,7 +181,7 @@ public class MyEncoder {
             writer.write(String.valueOf(n1) + " ");
             writer.write(String.valueOf(n2) + "\n");
 
-            
+
         }
         catch (IOException e) {
             e.printStackTrace();
