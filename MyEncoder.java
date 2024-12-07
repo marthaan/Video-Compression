@@ -594,11 +594,30 @@ public class MyEncoder {
         return quantizedBlocks;
     }
 
-    // scan blocks into output compressed file
-    private void writeMacroblock(int layer, List<int[][][]> quantizedBlocks) {
-        for (int[][][] quantizedBlock : quantizedBlocks) {
-            // write each layer to output file
-            // write each row to output file 
+    // scan blocks current macroblock of current frame into output .cmp file
+    // most secure to use a new writer for each macroblock instead of each frame/whole file but will see if this makes it slow 
+    private void writeMacroblock(int blockType, List<int[][][]> quantizedBlocks) {
+        // open new writer for each macroblock, write macroblock, close writer
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile, true))) {
+            for (int[][][] quantizedBlock : quantizedBlocks) {
+               // write block type of current block
+                writer.write(String.valueOf(blockType) + " ");
+
+                // write all RGB values of current block 
+                for (int row = 0; row < BLOCK_SIZE; row++) {
+                    for (int col = 0; col < BLOCK_SIZE; col++) {
+                        writer.write(String.valueOf(quantizedBlock[row][col][0]) + " ");
+                        writer.write(String.valueOf(quantizedBlock[row][col][1]) + " ");
+                        writer.write(String.valueOf(quantizedBlock[row][col][2]) + " ");
+                    }
+                }
+
+                // write new line --> next block written on its own line
+                writer.write("\n");
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
