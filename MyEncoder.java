@@ -1,13 +1,14 @@
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
-import java.io.BufferedWriter;
+
 
 public class MyEncoder {
     private File inputFile; // input file for each instance 
@@ -171,15 +172,15 @@ public class MyEncoder {
     // initial output .cmp file setup
     // writes n1, n2 once then closes this writer
     private void setupOutputFile() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+        try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(outputFile))) {
             // create output file name by changing file.rgb to file.cmp
             String fileName = inputFile.getName();
             fileName = fileName.substring(0, fileName.length() - 3);
 
             outputFile = new File(fileName + "cmp");
             
-            writer.write(String.valueOf(n1) + " ");
-            writer.write(String.valueOf(n2) + "\n");
+            dos.writeInt(n1);
+            dos.writeInt(n2);
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -598,22 +599,19 @@ public class MyEncoder {
     // most secure to use a new writer for each macroblock instead of each frame/whole file but will see if this makes it slow 
     private void writeMacroblock(int blockType, List<int[][][]> quantizedBlocks) {
         // open new writer for each macroblock, write macroblock, close writer
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile, true))) {
+        try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(outputFile, true))) {
             for (int[][][] quantizedBlock : quantizedBlocks) {
                // write block type of current block
-                writer.write(String.valueOf(blockType) + " ");
+                dos.writeInt(blockType);
 
                 // write all RGB values of current block 
                 for (int row = 0; row < BLOCK_SIZE; row++) {
                     for (int col = 0; col < BLOCK_SIZE; col++) {
-                        writer.write(String.valueOf(quantizedBlock[row][col][0]) + " ");
-                        writer.write(String.valueOf(quantizedBlock[row][col][1]) + " ");
-                        writer.write(String.valueOf(quantizedBlock[row][col][2]) + " ");
+                        dos.writeInt(quantizedBlock[row][col][0]);  // current R coefficient
+                        dos.writeInt(quantizedBlock[row][col][1]);  // current G coefficient
+                        dos.writeInt(quantizedBlock[row][col][2]);  // current B coefficient
                     }
                 }
-
-                // write new line --> next block written on its own line
-                writer.write("\n");
             }
         }
         catch (IOException e) {
