@@ -85,10 +85,6 @@ public class MyDecoder {
     // decompress each macroblock = list of its blocks
     private void decompress(List<List<int[][][]>> macroblocks) {   
         // for each macroblock: 
-        // dequantize
-        // idct
-        // etc.
-
         for (int i = 0; i < macroblocks.size(); i++) {
             List<int[][][]> dequantizedBlocks = dequantize(macroblocks.get(i), 0);  // placeholder blockType
             List<int[][][]> idctBlocks = idct(dequantizedBlocks);
