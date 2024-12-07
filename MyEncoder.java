@@ -1,12 +1,15 @@
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
+import java.io.Writer;
+import java.io.BufferedWriter;
 
 public class MyEncoder {
     private File inputFile; // input file for each instance 
@@ -165,17 +168,24 @@ public class MyEncoder {
         prevFrame3DArray = currFrame3DArray;
     }
 
+    // initial output .cmp file setup
+    // writes n1, n2 once then closes this writer
     private void setupOutputFile() {
-        // create output file name by changing file.rgb to file.cmp
-        String fileName = inputFile.getName();
-        fileName.substring(0, fileName.length() - 3);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+            // create output file name by changing file.rgb to file.cmp
+            String fileName = inputFile.getName();
+            fileName = fileName.substring(0, fileName.length() - 3);
 
-        outputFile = new File(fileName + "cmp");
-        // FileOutputStream fos = new FileOutputStream(outputFile);
-        // fos.write(n1);
-        // fos.write(n2); 
+            outputFile = new File(fileName + "cmp");
+            
+            writer.write(String.valueOf(n1) + " ");
+            writer.write(String.valueOf(n2) + "\n");
 
-        // fos.close();
+            
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     
