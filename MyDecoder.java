@@ -14,12 +14,15 @@ public class MyDecoder {
     private static final int WIDTH = 960;                       // width of each frame
     private static final int HEIGHT = 540;                      // height of each frame
     private static final int NUM_CHANNELS = 3;                  // r + g + b = 3
-    private static final int MACROBLOCKS_PER_FRAME = 2040;      // 60 per row x 33.75 per col ~= 2040
+    private static final int CHANNEL_SIZE = WIDTH * HEIGHT;                 // 518,400 bytes per channel (per frame)
+    private static final int FRAME_SIZE = CHANNEL_SIZE * NUM_CHANNELS;      // 1,555,200 total bytes per frame
+    private static final int MACROBLOCKS_PER_FRAME = 2040;                  // 60 per row x 33.75 per col ~= 2040
 
     private static final int MACROBLOCK_SIZE = 16;
     private static final int BLOCK_SIZE = 8;
 
     // List<List<int[][][]>> currMacroblocks;   // list of macroblocks for curr frame, with each macroblock = list of its blocks
+    // decodedMacroblocks --> can then scan those into .rgb
 
     // constructor
     public MyDecoder(File encoderFile, String audioPath) {
@@ -31,9 +34,9 @@ public class MyDecoder {
     }
 
 
-    // ----- PRE-PROCESS COMPRESSED INPUT DATA -----
+    // ----- PRE-PROCESS COMPRESSED FILE DATA -----
 
-    // parse compressed input file
+    // parse compressed input file frame-by-frame
     private void parseFile() {
         try {
             FileInputStream fis = new FileInputStream(encoderFile);
@@ -42,20 +45,12 @@ public class MyDecoder {
             n1 = fis.read();
             n2 = fis.read();
 
-            // we compressed one frame at a time, by compressing one macroblock at a time
+            // process one frame at a time --> loop until all frames processed = EOF
+            // process each frame one macroblock at a time = 4 blocks at a time
+            boolean endOfFile = false; 
 
-            // for each frame:
-            // get list of blocks per macroblock 
-                // 4 blocks = 1 macroblock
-                // get data of all 8x8 blocks for each frame --> get layer type, get coefficients
-             
-            // get list of macroblocks
-                // macroblocks per frame = 2040
-
-            
-            // process one frame at a time --> loop until all frames processed
-            for (int i = 0; readBlocks(fis); i++) {
-
+            while (!endOfFile) {
+                List<int[][][]> currMacroblock = new ArrayList<>();
             }
         }
         catch (IOException e) {
@@ -63,17 +58,24 @@ public class MyDecoder {
         }
     }
 
-    // 
-    private boolean readBlocks(FileInputStream fis) throws IOException {
-        int blockType; 
-
+    // AKA "if end of file"
+    private boolean readMacroblock(FileInputStream fis) throws IOException {
         // probably want to do the encoder scan method first
         // says we can format the output file however we want, so we could do: 
         // n1 n2 on its own line 
         // 1 block per line (block_type R1...R64 G1...G64 B1...B64)
         // AKA splitting all this up with line breaks would be easiest 
 
+        int blockType;
+
+
+
         return true; 
+    }
+
+    // reads current range of 4 blocks into a list of 4 blocks = a macroblock 
+    private void readBlocks() {
+         
     }
 
 
