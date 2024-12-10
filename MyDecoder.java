@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -16,12 +17,15 @@ public class MyDecoder {
     private static final int NUM_CHANNELS = 3;                  // r + g + b = 3
     private static final int CHANNEL_SIZE = WIDTH * HEIGHT;                 // 518,400 bytes per channel (per frame)
     private static final int FRAME_SIZE = CHANNEL_SIZE * NUM_CHANNELS;      // 1,555,200 total bytes per frame
+    
     private static final int MACROBLOCKS_PER_FRAME = 2040;                  // 60 per row x 33.75 per col ~= 2040
+    private static final int BLOCKS_PER_MACROBLOCK = 4;
 
     private static final int MACROBLOCK_SIZE = 16;
     private static final int BLOCK_SIZE = 8;
 
-    // List<List<int[][][]>> currMacroblocks;   // list of macroblocks for curr frame, with each macroblock = list of its blocks
+    boolean endOfFile;      // tracks if there is still a next byte to be read --> if == -1, then EOF (regardless of context)
+
     // decodedMacroblocks --> can then scan those into .rgb
 
     // constructor
@@ -31,6 +35,8 @@ public class MyDecoder {
 
         this.n1 = 0;
         this.n2 = 0; 
+
+        endOfFile = false;
     }
 
 
@@ -38,41 +44,65 @@ public class MyDecoder {
 
     // parse compressed input file frame-by-frame
     private void parseFile() {
-        try {
-            FileInputStream fis = new FileInputStream(encoderFile);
-
+        try (DataInputStream dis = new DataInputStream(new FileInputStream(encoderFile))) {     // change this for encoder also
             // get n1, n2
-            n1 = fis.read();
-            n2 = fis.read();
+            n1 = dis.readInt();
+            n2 = dis.readInt();
 
-            // process one frame at a time --> loop until all frames processed = EOF
-            // process each frame one macroblock at a time = 4 blocks at a time
-            boolean endOfFile = false;  
+            if (n1 == -1 || n2 == -1) { endOfFile = true; }
 
-            while (!endOfFile) {
-                List<int[][][]> currMacroblock = new ArrayList<>(); // list of 4 blocks
+            // process file one frame at a time
+            // loop until endOfFile == true == EOF
+            for (int f = 0; !endOfFile; f++) {
+                boolean frameProcessed = processFrame(dis);
 
+                if (!frameProcessed) { endOfFile = true; }
             }
-
-            fis.close();
         }
         catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    // AKA "if end of file"
-    private boolean readMacroblock(FileInputStream fis) throws IOException {
-        int blockType;
+    // processes current frame, checking if EOF along the way 
+    private boolean processFrame(DataInputStream dis) throws IOException {
+        // loop over one frame at a time = 2040 macroblocks at a time
+        for (int m = 0; m < MACROBLOCKS_PER_FRAME && !endOfFile; m++) {
+            
+            List<int[][][]> currMacroblock = parseMacroblock(dis);
+            decompress(currMacroblock);
+        }
 
-
-
-        return true; 
+        return endOfFile; 
     }
 
-    // reads current range of 4 blocks into a list of 4 blocks = a macroblock 
-    private void readBlocks() {
-         
+
+    private List<int[][][]> parseMacroblock(DataInputStream dis) throws IOException {
+        List<int[][][]> macroblock = new ArrayList<>();     // list of 4 blocks
+        
+        // loop over one macroblock at a time = 4 blocks at a time 
+        for (int b = 0; b < BLOCKS_PER_MACROBLOCK && !endOfFile; b++) {
+            int[][][] block = new int[BLOCK_SIZE][BLOCK_SIZE][NUM_CHANNELS];
+            
+            for (int channel = 0; channel < NUM_CHANNELS; channel++) {
+                for (int row = 0; row < BLOCK_SIZE; row++) {
+                    for (int col = 0; col < BLOCK_SIZE; col++) {
+                        int rgb = dis.readInt();
+
+                        if (rgb == -1) { 
+                            endOfFile = true; 
+                            break;
+                        }      
+                        
+                        block[row][col][channel] = rgb;         // R0...R7, then R8...R15, until R56...R63
+                    }
+                }
+            }
+
+            macroblock.add(block);
+        }
+
+        return macroblock;
     }
 
 
@@ -80,13 +110,11 @@ public class MyDecoder {
 
     // decompress driver method
     // decompress each macroblock = list of its blocks
-    private void decompress(List<List<int[][][]>> macroblocks) {   
+    private void decompress(List<int[][][]> macroblock) {   
         // for each macroblock: 
-        for (int i = 0; i < macroblocks.size(); i++) {
-            List<int[][][]> dequantizedBlocks = dequantize(macroblocks.get(i), 0);  // placeholder blockType
-            List<int[][][]> idctBlocks = idct(dequantizedBlocks);
-            scanMacroblock(idctBlocks);
-        }
+        List<int[][][]> dequantizedBlocks = dequantize(macroblock, 0);  // placeholder blockType
+        List<int[][][]> idctBlocks = idct(dequantizedBlocks);
+        scanMacroblock(idctBlocks);
     }
 
     // dequantize --> multiply each coeff. by 2^step
@@ -201,7 +229,7 @@ public class MyDecoder {
     }
 
 
-    // display --> calls AudioVideoPlayer.java 
+    // display --> calls AudioVideoPlayer.java (assuming its easier to make AVplayer a separate file)
     // will need to display input video and output video 
         // want to be able to see OG video vs. compressed-decompressed video 
     private void display(File rgbFile) {
@@ -211,7 +239,7 @@ public class MyDecoder {
 
     public static void main(String[] args) {
         File encoderFile = new File(args[0]);   // input = MyEncoder .cmp output file 
-        String audioPath = args[1];         // input = MP3 audio file --> store just path for now
+        String audioPath = args[1];             // input = MP3 audio file --> store just path for now
 
         MyDecoder decoder = new MyDecoder(encoderFile, audioPath);
 
