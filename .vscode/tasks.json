@@ -4,15 +4,15 @@
       {
         "label": "build",
         "type": "shell",
-        "command": "javac",
+        "command": "/usr/bin/javac",
+        // "command": "javac",
         "args": [
           "--module-path",
           "/Users/marthaannwilliams/Downloads/javafx-sdk-23.0.1/lib",   // path to javaFX folder --> will be diff. for Greg
           "--add-modules",      // specifies which javaFX modules (jars) to add
-          "javafx.controls,javafx.media,javafx.fxml,javafx.graphics", 
-          //"ALL-MODULE-PATH",        // add all --> can add less but not many & will prob need most of them 
+          "javafx.base,javafx.controls,javafx.media,javafx.fxml,javafx.graphics",   // modules added
           "-d",                 // specifies output directory 
-          ".",                         // store compiled .class files in directly final proj folder 
+          ".",                         // store compiled .class files directly in final proj folder 
           // "bin",                    // store compiled .class files in bin folder (if we want to reorganize)
           // "-sourcepath",        // specifies source directory 
           //"src",                    // src folder contains the .java files (for the .class files)

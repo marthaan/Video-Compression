@@ -46,6 +46,7 @@ AudioVideoPlayer --> set up
                 - added build task --> compiles code into a bin directory
             - launch.json
                 - added dependency --> runs compiled code = JavaFX modules
+    - had to change the user settings.json to directly link to JavaFX
 
 
 

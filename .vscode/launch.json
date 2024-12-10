@@ -33,7 +33,7 @@
 			"name": "JavaFX App",
 			"request": "launch",
 			"mainClass": "MyDecoder",	
-			"vmArgs": "--module-path /Users/marthaannwilliams/Downloads/javafx-sdk-23.0.1/lib --add-modules javafx.controls,javafx.media,javafx.fxml,javafx.graphics"	// can add less
+			"vmArgs": "--module-path /Users/marthaannwilliams/Downloads/javafx-sdk-23.0.1/lib --add-modules javafx.base,javafx.controls,javafx.media,javafx.fxml,javafx.graphics"	// can add less
 		},
 		// AVplayer launch configuration --> not necessary if does not have a main()
 		{
