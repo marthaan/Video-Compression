@@ -47,11 +47,14 @@ public class MyDecoder {
 
             // process one frame at a time --> loop until all frames processed = EOF
             // process each frame one macroblock at a time = 4 blocks at a time
-            boolean endOfFile = false; 
+            boolean endOfFile = false;  
 
             while (!endOfFile) {
-                List<int[][][]> currMacroblock = new ArrayList<>();
+                List<int[][][]> currMacroblock = new ArrayList<>(); // list of 4 blocks
+
             }
+
+            fis.close();
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -60,12 +63,6 @@ public class MyDecoder {
 
     // AKA "if end of file"
     private boolean readMacroblock(FileInputStream fis) throws IOException {
-        // probably want to do the encoder scan method first
-        // says we can format the output file however we want, so we could do: 
-        // n1 n2 on its own line 
-        // 1 block per line (block_type R1...R64 G1...G64 B1...B64)
-        // AKA splitting all this up with line breaks would be easiest 
-
         int blockType;
 
 

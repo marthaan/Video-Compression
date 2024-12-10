@@ -604,12 +604,12 @@ public class MyEncoder {
                // write block type of current block
                 dos.writeInt(blockType);
 
-                // write all RGB values of current block 
-                for (int row = 0; row < BLOCK_SIZE; row++) {
-                    for (int col = 0; col < BLOCK_SIZE; col++) {
-                        dos.writeInt(quantizedBlock[row][col][0]);  // current R coefficient
-                        dos.writeInt(quantizedBlock[row][col][1]);  // current G coefficient
-                        dos.writeInt(quantizedBlock[row][col][2]);  // current B coefficient
+                // write all R, then G, then B values of current block 
+                for (int channel = 0; channel < CHANNEL_SIZE; channel++) {
+                    for (int row = 0; row < BLOCK_SIZE; row++) {
+                        for (int col = 0; col < BLOCK_SIZE; col++) {
+                            dos.writeInt(quantizedBlock[row][col][channel]);  // current coefficient for current channel
+                        }
                     }
                 }
             }
