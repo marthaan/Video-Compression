@@ -9,7 +9,8 @@
           "--module-path",
           "/Users/marthaannwilliams/Downloads/javafx-sdk-23.0.1/lib",   // path to javaFX folder --> will be diff. for Greg
           "--add-modules",      // specifies which javaFX modules (jars) to add
-          "ALL-MODULE-PATH",        // add all --> can add less but not many & will prob need most of them 
+          "javafx.controls,javafx.media,javafx.fxml,javafx.graphics", 
+          //"ALL-MODULE-PATH",        // add all --> can add less but not many & will prob need most of them 
           "-d",                 // specifies output directory 
           ".",                         // store compiled .class files in directly final proj folder 
           // "bin",                    // store compiled .class files in bin folder (if we want to reorganize)

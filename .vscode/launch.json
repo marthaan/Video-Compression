@@ -17,25 +17,25 @@
 			"name": "MyEncoder",
 			"request": "launch",
 			"mainClass": "MyEncoder"
-			// "projectName": "VideoCompression_da3e0023",					// ?
-			// "args": "../video/rgbs/WalkingStaticBackground.rgb 1 2"		// specific test run ?
+			// "projectName": "VideoCompression_da3e0023",					// specific test run (I think)
+			// "args": "../video/rgbs/WalkingStaticBackground.rgb 1 2"		// specific test run (input args)
 		},
-		// MyDecoder launch configuration --> runs and displays decompressed video file
+		// MyDecoder launch configuration --> runs and decompresses video file --> can just use one below if decoder never run without display
 		{
 			"type": "java", 
 			"name": "MyDecoder",
 			"request": "launch", 
 			"mainClass": "MyDecoder"
 		},
-		// MyDecoder --> entry point for JavaFX (aka AVplayer)
+		// JavaFX App launch configuration --> MyDecoder = entry point for AVplayer (aka JavaFX App)
 		{
 			"type": "java",
 			"name": "JavaFX App",
 			"request": "launch",
 			"mainClass": "MyDecoder",	
-			"vmArgs": "--module-path /Users/marthaannwilliams/Downloads/javafx-sdk-23.0.1/lib --add-modules ALL-MODULE-PATH"	// can add less
+			"vmArgs": "--module-path /Users/marthaannwilliams/Downloads/javafx-sdk-23.0.1/lib --add-modules javafx.controls,javafx.media,javafx.fxml,javafx.graphics"	// can add less
 		},
-		// AVplayer --> not necessary if does not have a main()
+		// AVplayer launch configuration --> not necessary if does not have a main()
 		{
 			"type": "java",
 			"name": "AudioVideoPlayer",
