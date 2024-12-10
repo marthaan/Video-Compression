@@ -37,6 +37,17 @@ MyDecoder
         - 4. decoding 
 
 
+AudioVideoPlayer --> set up
+    - download JavaFx --> https://gluonhq.com/products/javafx/
+        - I did MacOS 23.0.1 for SDK
+    - configure
+        - .vscode folder 
+            - create tasks.json (if not there, mine wasn't)
+                - added build task --> compiles code into a bin directory
+            - launch.json
+                - added dependency --> runs compiled code = JavaFX modules
+
+
 
 Notes:
 
