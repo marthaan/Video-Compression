@@ -26,7 +26,7 @@ public class MyDecoder {
 
     boolean endOfFile;      // tracks if there is still a next byte to be read --> if == -1, then EOF (regardless of context)
 
-    // decodedMacroblocks --> can then scan those into .rgb
+    // List<WritableImage> frames;  // or WritableImage = currFrame;
 
     // constructor
     public MyDecoder(File encoderFile, String audioPath) {
@@ -49,12 +49,15 @@ public class MyDecoder {
             n1 = readAndCheckInt(dis);
             n2 = readAndCheckInt(dis);
 
-            // process file one frame at a time
-            // loop until endOfFile == true == EOF
+            // process file one frame at a time, until EOF
             for (int f = 0; !endOfFile; f++) {
                 boolean frameProcessed = processFrame(dis);
 
-                if (!frameProcessed) { endOfFile = true; }
+                if (!frameProcessed) { 
+                    System.out.println("ERROR: parseFile() --> frame not processed");
+                    endOfFile = true;
+                    break;
+                }
             }
         }
         catch (IOException e) {
@@ -62,7 +65,7 @@ public class MyDecoder {
         }
     }
 
-    // .readInt(dis) but also check it & updates endOfFile if needed
+    // .readInt(dis) but checks it & updates endOfFile if needed
     private int readAndCheckInt(DataInputStream dis) throws IOException {
         int nextInt = dis.readInt();
 
@@ -71,39 +74,60 @@ public class MyDecoder {
         return nextInt;
     }
 
-    // processes current frame, checking if EOF along the way 
+    // processes current frame macroblock-by-macroblock
+    // decompresses each macroblock, which also writes it to the output file
+    // checks if EOF along the way 
     private boolean processFrame(DataInputStream dis) throws IOException {
+        List<List<int[][][]>> decompressedFrame = new ArrayList<>();    // list of all decomp. macroblocks for the curr frame
+
         // loop over one frame at a time = 2040 macroblocks at a time
         for (int m = 0; m < MACROBLOCKS_PER_FRAME && !endOfFile; m++) {
-            
-            List<int[][][]> currMacroblock = parseMacroblock(dis);
-            decompress(currMacroblock);
+            // get & decompress curr macroblock
+            int currBlockType = readAndCheckInt(dis);
+            List<int[][][]> currMacroblock = parseMacroblock(currBlockType, dis);
+            List<int[][][]> decompressedMacroblock = decompress(currMacroblock, currBlockType);
+
+            // add decompressed macroblock to frame list
+            decompressedFrame.add(decompressedMacroblock);
         }
+
+        // WritableImage frameImage = formatFrame(decompressedFrame);
+        // frames.add(frameImage);
 
         return endOfFile; 
     }
 
-
-    private List<int[][][]> parseMacroblock(DataInputStream dis) throws IOException {
-        List<int[][][]> macroblock = new ArrayList<>();     // current macroblock = list of 4 blocks
+    // parses the current macroblock 
+    // returns the current macroblock = list of its 4 blocks
+    private List<int[][][]> parseMacroblock(int blockType, DataInputStream dis) throws IOException {
+        List<int[][][]> macroblock = new ArrayList<>();
         
-        int blockType = readAndCheckInt(dis);
+        // already have first block type
+            // want to just check it each time --> checks that block type is the same for entire macroblock 
+            // bc if not, then something wrong  
 
         // loop over one macroblock at a time = 4 blocks at a time 
         for (int b = 0; b < BLOCKS_PER_MACROBLOCK && !endOfFile; b++) {
             int[][][] block = new int[BLOCK_SIZE][BLOCK_SIZE][NUM_CHANNELS];
             
+            if (b != 0) { 
+                int currBlockType = readAndCheckInt(dis);
+
+                if (currBlockType != blockType) { 
+                    System.out.println("ERROR: parseMacroblock() --> mismatched block types");
+                    endOfFile = true;   // will kill the compression since there's an error (if that's what we want)
+                    break; 
+                }
+                // else, no need to update the blockType since its the same 
+                // nextInt should now be the first R value 
+            }
+            
             for (int channel = 0; channel < NUM_CHANNELS; channel++) {
                 for (int row = 0; row < BLOCK_SIZE; row++) {
                     for (int col = 0; col < BLOCK_SIZE; col++) {
-                        int rgb = dis.readInt();
-
-                        if (rgb == -1) { 
-                            endOfFile = true; 
-                            break;
-                        }      
+                        int rgb = readAndCheckInt(dis);         // current channel value at (row, col)
                         
-                        block[row][col][channel] = rgb;         // R0...R7, then R8...R15, until R56...R63
+                        block[row][col][channel] = rgb;         // R0...R7, then R8...R15, until R56...R63, 
                     }
                 }
             }
@@ -119,15 +143,14 @@ public class MyDecoder {
 
     // decompress driver method
     // decompress each macroblock = list of its blocks
-    private void decompress(List<int[][][]> macroblock) {   
-        // for each macroblock: 
-        List<int[][][]> dequantizedBlocks = dequantize(macroblock, 0);  // placeholder blockType
+    private List<int[][][]> decompress(List<int[][][]> macroblock, int blockType) {   
+        List<int[][][]> dequantizedBlocks = dequantize(macroblock, blockType);
         List<int[][][]> idctBlocks = idct(dequantizedBlocks);
-        scanMacroblock(idctBlocks);
+
+        return idctBlocks;
     }
 
     // dequantize --> multiply each coeff. by 2^step
-    // quantize needs to be changed from dividing by the step to dividing by 2^step
     private List<int[][][]> dequantize(List<int[][][]> quantizedBlocks, int blockType) {
         List<int[][][]> dequantizedBlocks = new ArrayList<>();
 
@@ -229,20 +252,23 @@ public class MyDecoder {
         return scalars;
     }
 
-
-    // may need to unblock / format for display first?
-    // unblock into a frame to display each frame at a time?
-    // output to a .rgb file to send to AudioVideoPlayer
-    private void scanMacroblock(List<int[][][]> idctBlocks) {
+    // convert curr frame (decompressed macroblocks) to a WritableImage
+    private void formatFrame(List<List<int[][][]>> decompressedMacroblocks) {
 
     }
 
 
-    // display --> calls AudioVideoPlayer.java (assuming its easier to make AVplayer a separate file)
+    // display --> calls AudioVideoPlayer.java (assuming its easier to make AV player a separate file)
+        // can either display a .rgb video file
+        // or could display frame-by-frame as each frame is processed
+            // can't display macroblock-by-macroblock 
+            // i think this is best since we need to be able to pause frames, step thru them, etc. ?
+                // but actually not sure that this matters, think we still need to get all frames then display
+                // but the frames can be WritableImage objects --> easiest for JavaFX
     // will need to display input video and output video 
         // want to be able to see OG video vs. compressed-decompressed video 
-    private void display(File rgbFile) {
-
+    private void display() {
+        // AudioVideoPlayer player = new AudioVideoPlayer(frames, audioPath);
     }
 
 
@@ -253,5 +279,7 @@ public class MyDecoder {
         MyDecoder decoder = new MyDecoder(encoderFile, audioPath);
 
         decoder.parseFile();
+
+        // decoder.display();
     }
 }
