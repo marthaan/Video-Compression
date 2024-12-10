@@ -21,7 +21,9 @@ public class MyDecoder {
     private static final int CHANNEL_SIZE = WIDTH * HEIGHT;                 // 518,400 bytes per channel (per frame)
     private static final int FRAME_SIZE = CHANNEL_SIZE * NUM_CHANNELS;      // 1,555,200 total bytes per frame
     
-    private static final int MACROBLOCKS_PER_FRAME = 2040;                  // 60 per row x 33.75 per col ~= 2040
+    private static final int MACROBLOCKS_PER_ROW = 60;          
+    private static final int MACROBLOCKS_PER_COL = 34;          // 33.75 ~= 34
+    private static final int MACROBLOCKS_PER_FRAME = MACROBLOCKS_PER_ROW * MACROBLOCKS_PER_COL;                  
     private static final int BLOCKS_PER_MACROBLOCK = 4;
 
     private static final int MACROBLOCK_SIZE = 16;
@@ -264,11 +266,54 @@ public class MyDecoder {
         PixelWriter writer = frame.getPixelWriter();    // writes RGB pixel data to frame image
 
         // write each macroblock's RGB data to the frame image (for the current frame)
-        for (List<int[][][]> decompressedMacroblock : decompressedFrame) {
+        // macroblock = list of 4 blocks
+        
+        // loop over the frame, one macroblock at a time 
+        for (int row = 0; row < MACROBLOCKS_PER_COL; row++) {
+            for (int col = 0; col < MACROBLOCKS_PER_ROW; col++) {
+                // if last col == MACROBLOCKS_PER_COL - 1, handle differently (partial macroblocks)
 
+                int mbIndex = (row * MACROBLOCKS_PER_ROW + col * MACROBLOCKS_PER_COL); 
+                List<int[][][]> currMacroblock = decompressedFrame.get(mbIndex);
+
+                // loop over the macroblock, one block at a time
+                for (int b = 0; b < BLOCKS_PER_MACROBLOCK; b++) {
+                    int[][][] currBlock = currMacroblock.get(b);
+
+                    for (int r = 0; r < BLOCK_SIZE; r++) {
+                        for (int c = 0; c < BLOCK_SIZE; c++) {
+                            int red = currBlock[r][c][0];
+                            int green = currBlock[r][c][1];
+                            int blue = currBlock[r][c][2];
+
+                            int rgb = packArgb(red, green, blue);
+                            writer.setArgb(r, c, rgb);      // adjust r and c to reflect frame x, y
+                        }
+                    }
+                }
+            }
         }
         
         return frame;
+    }
+
+    /** packArgb
+    * Packs given RGB channels into one ARGB value
+    * @param red [0, 255] red channel value
+    * @param green [0, 255] green channel value
+    * @param blue [0, 255] blue channel value
+    * @return rgb packed ARGB value
+    */
+   private int packArgb(int red, int green, int blue) {
+        // ensure channel values are between 0 and 255
+        int alpha = 255;    // assume fully opaque
+        red = Math.max(0, Math.min(255, red));
+        green = Math.max(0, Math.min(255, green));
+        blue = Math.max(0, Math.min(255, blue));
+
+        int rgb = (red << 16) | (green << 8) | blue;
+
+        return rgb;
     }
 
 
