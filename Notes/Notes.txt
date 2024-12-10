@@ -37,17 +37,28 @@ MyDecoder
         - 4. decoding 
 
 
-AudioVideoPlayer --> set up
-    - download JavaFx --> https://gluonhq.com/products/javafx/
-        - I did MacOS 23.0.1 for SDK
+AudioVideoPlayer --> CONFIGURATION
+    - java JDK version --> 21 (21.0.5)
+    - download JavaFX --> https://gluonhq.com/products/javafx/
+        - I did version MacOS 23.0.1 aarch64 SDK
+            - my laptop = mac w/ M1 chip btw
+        - after it downloads, unzip it (don't need to unzip the src stuff)
+            - should be see the "lib" folder with .jars in it
     - configure
         - .vscode folder 
-            - create tasks.json (if not there, mine wasn't)
-                - added build task --> compiles code into a bin directory
-            - launch.json
-                - added dependency --> runs compiled code = JavaFX modules
-    - had to change the user settings.json to directly link to JavaFX
-
+            - tasks.json --> for build task
+                - mine didn't already exist so I made it... I'm assuming if you pull from main yours 
+                yours will automatically be the same as mine
+                - *** you'll need to change "--module-path" to where your javaFX lib folder is on your laptop
+            - launch.json --> dependencies for launching javaFX
+                - *** you'll need to change "--module-path" again
+    - try to build the project 
+        - make sure you have the Java Extensions Manager extension (lets you build in VScode)
+        - command shift b
+    - *** mine built right (AVplayer.class file was made), but was still have import errors
+        - to fix import errors --> had to change the user settings.json to directly link to JavaFX
+            - command+shift+P "Preferences: Open User Settings (JSON)"
+            - can send you the lines I had to add if you need them 
 
 
 Notes:
