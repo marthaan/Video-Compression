@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 
+import javafx.scene.image.WritableImage;
+import javafx.scene.image.PixelWriter;
+
 
 public class MyDecoder {
     File encoderFile;       // input file
@@ -26,7 +29,7 @@ public class MyDecoder {
 
     boolean endOfFile;      // tracks if there is still a next byte to be read --> if == -1, then EOF (regardless of context)
 
-    // List<WritableImage> frames;  // or WritableImage = currFrame;
+    List<WritableImage> frames;  // or WritableImage = currFrame; but I think we have to do them all before display
 
     // constructor
     public MyDecoder(File encoderFile, String audioPath) {
@@ -37,6 +40,8 @@ public class MyDecoder {
         this.n2 = 0; 
 
         endOfFile = false;
+
+        frames = new ArrayList<>();
     }
 
 
@@ -91,8 +96,8 @@ public class MyDecoder {
             decompressedFrame.add(decompressedMacroblock);
         }
 
-        // WritableImage frameImage = formatFrame(decompressedFrame);
-        // frames.add(frameImage);
+        WritableImage frameImage = formatFrame(decompressedFrame);
+        frames.add(frameImage);
 
         return endOfFile; 
     }
@@ -253,8 +258,17 @@ public class MyDecoder {
     }
 
     // convert curr frame (decompressed macroblocks) to a WritableImage
-    private void formatFrame(List<List<int[][][]>> decompressedMacroblocks) {
-        // return WritableImage
+    private WritableImage formatFrame(List<List<int[][][]>> decompressedFrame) {
+        WritableImage frame = new WritableImage(WIDTH, HEIGHT); // initialize image for the current frame
+
+        PixelWriter writer = frame.getPixelWriter();    // writes RGB pixel data to frame image
+
+        // write each macroblock's RGB data to the frame image (for the current frame)
+        for (List<int[][][]> decompressedMacroblock : decompressedFrame) {
+
+        }
+        
+        return frame;
     }
 
 
@@ -268,7 +282,8 @@ public class MyDecoder {
     // will need to display input video and output video 
         // want to be able to see OG video vs. compressed-decompressed video 
     private void display() {
-        // AudioVideoPlayer player = new AudioVideoPlayer(frames, audioPath);
+        AudioVideoPlayer player = new AudioVideoPlayer(frames, audioPath);
+        // player.run();
     }
 
 

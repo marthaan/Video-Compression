@@ -1,5 +1,8 @@
+import java.util.List;
+
 import javafx.application.Application;  // in base jar
 import javafx.scene.Scene;              // in base jar
+import javafx.scene.image.WritableImage;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.layout.StackPane;
@@ -10,6 +13,13 @@ import javafx.stage.Stage;              // in base jar
 // play video at frame rate w/ synchronized sound
     // must be able to play, pause, and step thru video frames
 public class AudioVideoPlayer extends Application {
+    List<WritableImage> frames;
+    String audioPath;
+
+    public AudioVideoPlayer(List<WritableImage> frames, String audioPath) {
+        this.frames = frames;
+        this.audioPath = audioPath;
+    }
     
     @Override
     public void start(Stage primaryStage) {
@@ -32,6 +42,7 @@ public class AudioVideoPlayer extends Application {
     }
 
     // may not need
+    // will probably need a public run() method or something instead 
     public static void main(String[] args) {
         launch(args); // Starts the JavaFX application
     }  
