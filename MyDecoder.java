@@ -46,10 +46,8 @@ public class MyDecoder {
     private void parseFile() {
         try (DataInputStream dis = new DataInputStream(new FileInputStream(encoderFile))) {     // change this for encoder also
             // get n1, n2
-            n1 = dis.readInt();
-            n2 = dis.readInt();
-
-            if (n1 == -1 || n2 == -1) { endOfFile = true; }
+            n1 = readAndCheckInt(dis);
+            n2 = readAndCheckInt(dis);
 
             // process file one frame at a time
             // loop until endOfFile == true == EOF
@@ -62,6 +60,15 @@ public class MyDecoder {
         catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    // .readInt(dis) but also check it & updates endOfFile if needed
+    private int readAndCheckInt(DataInputStream dis) throws IOException {
+        int nextInt = dis.readInt();
+
+        if (nextInt == -1) { endOfFile = true; }
+
+        return nextInt;
     }
 
     // processes current frame, checking if EOF along the way 
@@ -78,8 +85,10 @@ public class MyDecoder {
 
 
     private List<int[][][]> parseMacroblock(DataInputStream dis) throws IOException {
-        List<int[][][]> macroblock = new ArrayList<>();     // list of 4 blocks
+        List<int[][][]> macroblock = new ArrayList<>();     // current macroblock = list of 4 blocks
         
+        int blockType = readAndCheckInt(dis);
+
         // loop over one macroblock at a time = 4 blocks at a time 
         for (int b = 0; b < BLOCKS_PER_MACROBLOCK && !endOfFile; b++) {
             int[][][] block = new int[BLOCK_SIZE][BLOCK_SIZE][NUM_CHANNELS];
