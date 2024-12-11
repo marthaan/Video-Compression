@@ -24,7 +24,8 @@ public class AudioVideoPlayer extends Application {
         loadAndDisplayFrames();  // Start loading and displaying frames
     }
 
-    // This method is responsible for fetching frames and displaying them
+    // runs decoder to get decompressed frames 
+    // initiates display process
     private void loadAndDisplayFrames() {
         // Example: Passing dummy paths to the decoder (update with real paths)
         File encoderFile = new File("/Users/marthaannwilliams/Desktop/2frames.cmp");
