@@ -472,6 +472,8 @@ public class MyEncoder {
      * @return
      */
     private List<int[][][]> block(int[][][] macroblock) {
+        System.out.println("BLOCK()");
+        
         List<int[][][]> blocks = new ArrayList<>();
 
         // iterate over the whole macroblock, block-by-block
@@ -496,6 +498,8 @@ public class MyEncoder {
     }
 
     private List<int[][][]> dct(List<int[][][]> blocks) {
+        System.out.println("DCT()");
+        
         List<int[][][]> dctBlocks = new ArrayList<>();
         
         for (int[][][] block : blocks) {
@@ -564,6 +568,8 @@ public class MyEncoder {
     }
 
     private List<int[][][]> quantize(List<int[][][]> dctBlocks, int layer) {
+        System.out.println("QUANTIZE()");
+        
         List<int[][][]> quantizedBlocks = new ArrayList<>();
 
         int step = 0;
@@ -599,7 +605,7 @@ public class MyEncoder {
     // scan blocks current macroblock of current frame into output .cmp file
     // most secure to use a new writer for each macroblock instead of each frame/whole file but will see if this makes it slow 
     private void writeMacroblock(int blockType, List<int[][][]> quantizedBlocks) {
-        System.out.println("----- WRITING COMPRESSED MACROBLOCK -----");
+        // System.out.println("----- WRITING COMPRESSED MACROBLOCK -----");
         
         // open new writer for each macroblock, write macroblock, close writer
         try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(outputFile, true))) {
@@ -621,7 +627,7 @@ public class MyEncoder {
             e.printStackTrace();
         }
         
-        System.out.println("----- DONE WRITING MACROBLOCK-----");
+        // System.out.println("----- DONE WRITING MACROBLOCK-----");
     }
 
 
