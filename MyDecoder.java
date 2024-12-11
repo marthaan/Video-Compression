@@ -441,6 +441,12 @@ public class MyDecoder {
     }
 
 
+    public List<WritableImage> getFrames() { 
+        parseFile(); 
+        
+        return frames; 
+    }
+
     public static void main(String[] args) {
         File encoderFile = new File(args[0]);   // input = MyEncoder .cmp output file 
         String audioPath = args[1];             // input = MP3 audio file --> store just path for now

@@ -18,6 +18,12 @@ public class AudioVideoPlayer extends Application {
 
     private List<WritableImage> frames;  // Store frames to display
 
+
+    @Override
+    public void start(Stage primaryStage) {
+        loadAndDisplayFrames();  // Start loading and displaying frames
+    }
+
     // This method is responsible for fetching frames and displaying them
     private void loadAndDisplayFrames() {
         // Example: Passing dummy paths to the decoder (update with real paths)
@@ -27,6 +33,7 @@ public class AudioVideoPlayer extends Application {
         MyDecoder decoder = new MyDecoder(encoderFile, audioPath);
 
         frames = decoder.testFrames();  // Fetch frames from MyDecoder --> can also use this to pass in file and audio
+        // frames = decoder.getFrames();    // gets actual frames 
 
         // If no frames are found, handle gracefully
         if (frames == null || frames.isEmpty()) {
@@ -65,11 +72,6 @@ public class AudioVideoPlayer extends Application {
         // Play the timeline to show the images one by one
         timeline.setCycleCount(Timeline.INDEFINITE);  // Infinite loop of frames
         timeline.play();
-    }
-
-    @Override
-    public void start(Stage primaryStage) {
-        loadAndDisplayFrames();  // Start loading and displaying frames
     }
 
     public static void main(String[] args) {
