@@ -399,8 +399,8 @@ public class MyDecoder {
         // want to be able to see OG video vs. compressed-decompressed video 
     private void display() {
         AudioVideoPlayer player = new AudioVideoPlayer();
-        player.setInputData(frames, audioPath);
-        player.run();
+       // player.setInputData(frames, audioPath);
+        // player.run();
     }
 
 
