@@ -61,6 +61,12 @@ public class MyDecoder {
 
             // process file one frame at a time, until EOF
             for (int f = 0; !endOfFile; f++) {
+                
+
+                if (endOfFile) {
+                    System.out.println("---END OF FILE----");
+                }
+
                 boolean frameProcessed = processFrame(dis);     // false = endOfFrame vs endOfFile
 
                 if (!frameProcessed && !endOfFile) {  // need to fix to deal with parsing errors vs. just EOF 
@@ -68,11 +74,9 @@ public class MyDecoder {
                     endOfFile = true;   // redundant but shouldn't cause errors
                     break;
                 }
-                if (endOfFile) {
-                    System.out.println("---END OF FILE----");
-                }
 
-                System.out.println("FRAME PROCESSED: " + f);
+
+                System.out.println("FRAME PROCESSED: " + f + "\n");
             }
         }
         catch (IOException e) {
@@ -114,16 +118,17 @@ public class MyDecoder {
 
             // if all expected macroblocks of frame processed
             if (m == MACROBLOCKS_PER_FRAME - 1) {
-                System.out.println("LAST MACROBLOCK OF FRAME PROCESSED --> FRAME SUCCESSFULLY PARSED");
+                // System.out.println("LAST MACROBLOCK OF FRAME PROCESSED --> FRAME SUCCESSFULLY PARSED");
                 frameProcessed = true;
             }
         }
 
-        System.out.println("DECOMP FRAME SIZE: " + decompressedFrame.size() + "\n");
+        // System.out.println("DECOMP FRAME SIZE: " + decompressedFrame.size() + "\n");
 
         if (!endOfFile) {
             WritableImage frameImage = formatFrame(decompressedFrame);
             frames.add(frameImage);
+
         }
 
         return frameProcessed; 
@@ -397,10 +402,16 @@ public class MyDecoder {
                 // but the frames can be WritableImage objects --> easiest for JavaFX
     // will need to display input video and output video 
         // want to be able to see OG video vs. compressed-decompressed video 
-    private void display() {
+    private void displayAV() {
         AudioVideoPlayer player = new AudioVideoPlayer();
-       // player.setInputData(frames, audioPath);
-        // player.run();
+        // player.setInputData(frames, audioPath);
+
+        if (frames == null) { System.out.println("\n---DISPLAY() --> NULL. FRAMES"); }
+        System.out.println("\n---DISPLAY() --> CURR FRAMELIST SIZE: " + frames.size());
+
+        // player.setInputData(frames);    // need to add audio
+        // System.out.println(player.testFrameInit());
+        // player.display();
     }
 
 
@@ -416,6 +427,6 @@ public class MyDecoder {
 
         decoder.parseFile();
 
-        // decoder.display();
+        decoder.displayAV();
     }
 }

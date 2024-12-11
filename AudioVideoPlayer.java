@@ -1,53 +1,109 @@
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
-import javafx.scene.media.MediaView;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
+/**
 public class AudioVideoPlayer extends Application {
-
-    // Local video path
-    private String mediaUrl = "/Users/marthaannwilliams/Desktop/USC/CSCI_576/video/videos_540p/WalkingStaticBackground.mp4";
 
     @Override
     public void start(Stage primaryStage) {
-        // Format the media URL to use 'file://' prefix
-        String videoPath = "file:///" + mediaUrl;
+        // Create a WritableImage (let's say 960x540 with solid red color)
+        int width = 960;
+        int height = 540;
 
-        // Create Media and MediaPlayer
-        Media media = new Media(videoPath);
-        MediaPlayer mediaPlayer = new MediaPlayer(media);
+        WritableImage writableImage = new WritableImage(width, height);
 
-        // Create a MediaView to display the video
-        MediaView mediaView = new MediaView(mediaPlayer);
-        mediaView.setFitWidth(960); // Set width
-        mediaView.setFitHeight(540); // Set height
-        mediaView.setPreserveRatio(true); // Keep the aspect ratio
+        // Set all pixels of the image to a solid color (e.g., red)
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                writableImage.getPixelWriter().setColor(x, y, Color.RED);  // Red color
+            }
+        }
 
-        // StackPane to hold the MediaView
+        // Set up ImageView to display the image
+        ImageView imageView = new ImageView(writableImage);
         StackPane root = new StackPane();
-        root.getChildren().add(mediaView);
+        root.getChildren().add(imageView);
 
-        // Create a Scene and set it on the Stage
-        Scene scene = new Scene(root, 960, 540);
-        primaryStage.setTitle("AudioVideoPlayer");
+        // Set up the Scene and Stage
+        Scene scene = new Scene(root, width, height);
+        primaryStage.setTitle("Solid Color Image Test");
         primaryStage.setScene(scene);
         primaryStage.show();
-
-        // Play the media when it's ready
-        mediaPlayer.setOnReady(() -> {
-            mediaPlayer.play();
-        });
-
-        // End of media event
-        mediaPlayer.setOnEndOfMedia(() -> {
-            System.out.println("Video finished playing.");
-        });
     }
 
     public static void main(String[] args) {
-        launch(args); // Starts the JavaFX application
+        launch(args);  // Starts the JavaFX application
+    }
+}
+ */
+
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
+import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
+import javafx.util.Duration;
+import java.util.ArrayList;
+import java.util.List;
+
+public class AudioVideoPlayer extends Application {
+
+    @Override
+    public void start(Stage primaryStage) {
+        // Create a list of WritableImages with different solid colors
+        List<WritableImage> frames = new ArrayList<>();
+        int width = 960;
+        int height = 540;
+        Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.PURPLE};
+
+        // Generate a WritableImage for each color and add it to the list
+        for (Color color : colors) {
+            WritableImage writableImage = new WritableImage(width, height);
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    writableImage.getPixelWriter().setColor(x, y, color);  // Fill with the color
+                }
+            }
+            frames.add(writableImage);  // Add image to the list
+        }
+
+        // Set up the ImageView to display the images
+        ImageView imageView = new ImageView();
+        StackPane root = new StackPane();
+        root.getChildren().add(imageView);
+
+        // Set up the Scene and Stage
+        Scene scene = new Scene(root, width, height);
+        primaryStage.setTitle("Solid Color Image Sequence");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+
+        // Create a Timeline to display the frames sequentially
+        Timeline timeline = new Timeline();
+        for (int i = 0; i < frames.size(); i++) {
+            final int frameIndex = i;
+            KeyFrame keyFrame = new KeyFrame(
+                    Duration.seconds(i),  // Delay between frames (1 second each here)
+                    event -> imageView.setImage(frames.get(frameIndex))  // Set the current image
+            );
+            timeline.getKeyFrames().add(keyFrame);
+        }
+
+        // Play the timeline to show the images one by one
+        timeline.setCycleCount(Timeline.INDEFINITE);  // Infinite loop of frames
+        timeline.play();
+    }
+
+    public static void main(String[] args) {
+        launch(args);  // Starts the JavaFX application
     }
 }
