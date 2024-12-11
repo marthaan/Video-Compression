@@ -63,10 +63,13 @@ public class MyDecoder {
             for (int f = 0; !endOfFile; f++) {
                 boolean frameProcessed = processFrame(dis);     // false = endOfFrame vs endOfFile
 
-                if (!frameProcessed) {  // need to fix to deal with parsing errors vs. just EOF 
+                if (!frameProcessed && !endOfFile) {  // need to fix to deal with parsing errors vs. just EOF 
                     System.out.println("ERROR: parseFile() --> frame not processed");
                     endOfFile = true;   // redundant but shouldn't cause errors
                     break;
+                }
+                if (endOfFile) {
+                    System.out.println("---END OF FILE----");
                 }
 
                 System.out.println("FRAME PROCESSED: " + f);
@@ -118,8 +121,10 @@ public class MyDecoder {
 
         System.out.println("DECOMP FRAME SIZE: " + decompressedFrame.size() + "\n");
 
-        WritableImage frameImage = formatFrame(decompressedFrame);
-        frames.add(frameImage);
+        if (!endOfFile) {
+            WritableImage frameImage = formatFrame(decompressedFrame);
+            frames.add(frameImage);
+        }
 
         return frameProcessed; 
     }
@@ -281,11 +286,12 @@ public class MyDecoder {
 
     // redo
     private WritableImage formatFrame(List<List<int[][][]>> decompressedFrame) {
-        System.out.println("FORMATFRAME(): decompressedFrame size = # of macroblocks --> " + decompressedFrame.size());
+        System.out.println("FORMATFRAME(): ");
+        System.out.println("decompressedFrame size = # of macroblocks in frame =  " + decompressedFrame.size());
+        if (decompressedFrame.size() != 2040) { System.out.println("ERROR --> invalid # of macroblocks"); }
         
         WritableImage frame = new WritableImage(WIDTH, HEIGHT); // initialize image for the current frame
-
-        PixelWriter writer = frame.getPixelWriter();    // writes RGB pixel data to frame image
+        PixelWriter writer = frame.getPixelWriter();            // writes RGB pixel data to frame image
 
         for (int mb = 0; mb < decompressedFrame.size(); mb++) {
             List<int[][][]> currMacroblock = decompressedFrame.get(mb);
@@ -309,8 +315,11 @@ public class MyDecoder {
                         int green = currBlock[r][c][1];
                         int blue = currBlock[r][c][2];
 
+                        int pixelX = Math.max(0, Math.min(WIDTH - 1, bX + c));  // clamp = [0, 959]
+                        int pixelY = Math.max(0, Math.min(HEIGHT - 1, bY + r)); // clamp = [0, 539]
+
                         int rgb = packArgb(red, green, blue);
-                        writer.setArgb(bX + c, bY + r, rgb);      // adjust r and c to reflect frame x, y
+                        writer.setArgb(pixelX, pixelY, rgb);     
                     }
                 }
             }
