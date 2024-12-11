@@ -71,7 +71,7 @@ public class MyEncoder {
             
             FileInputStream fis = new FileInputStream(inputFile);
 
-            for (int i = 0; readFrame(fis); i++) {
+            for (int i = 0; readFrame(fis); i++) {  
                 // if not I-frame --> if P-frame
                 if (i != 0) {
                     processPFrame();

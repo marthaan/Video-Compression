@@ -56,15 +56,20 @@ public class MyDecoder {
             n1 = readAndCheckInt(dis);
             n2 = readAndCheckInt(dis);
 
+            System.out.println("PARSEFILE():");
+            System.out.println("n1, n2 parsed: " + n1 + ", " + n2 + "\n");
+
             // process file one frame at a time, until EOF
             for (int f = 0; !endOfFile; f++) {
                 boolean frameProcessed = processFrame(dis);
 
                 if (!frameProcessed) { 
                     System.out.println("ERROR: parseFile() --> frame not processed");
-                    endOfFile = true;
+                    endOfFile = true;   // redundant but shouldn't cause errors
                     break;
                 }
+
+                System.out.println("FRAME PROCESSED: " + f);
             }
         }
         catch (IOException e) {
@@ -89,17 +94,21 @@ public class MyDecoder {
 
         // loop over one frame at a time = 2040 macroblocks at a time
         for (int m = 0; m < MACROBLOCKS_PER_FRAME && !endOfFile; m++) {
+            System.out.println("PROCESSFRAME() --> m: " + m);
+            
             // get & decompress curr macroblock
             int currBlockType = readAndCheckInt(dis);
             List<int[][][]> currMacroblock = parseMacroblock(currBlockType, dis);
             List<int[][][]> decompressedMacroblock = decompress(currMacroblock, currBlockType);
 
+            System.out.println("currMacroblock.size(): " + currMacroblock.size());
+
             // add decompressed macroblock to frame list
             decompressedFrame.add(decompressedMacroblock);
         }
 
-        WritableImage frameImage = formatFrame(decompressedFrame);
-        //frames.add(frameImage);
+        // WritableImage frameImage = formatFrame(decompressedFrame);
+        // frames.add(frameImage);
 
         return endOfFile; 
     }
@@ -117,7 +126,7 @@ public class MyDecoder {
         for (int b = 0; b < BLOCKS_PER_MACROBLOCK && !endOfFile; b++) {
             int[][][] block = new int[BLOCK_SIZE][BLOCK_SIZE][NUM_CHANNELS];
             
-            if (b != 0) { 
+            if (b > 0) { 
                 int currBlockType = readAndCheckInt(dis);
 
                 if (currBlockType != blockType) { 
@@ -129,9 +138,9 @@ public class MyDecoder {
                 // nextInt should now be the first R value 
             }
             
-            for (int channel = 0; channel < NUM_CHANNELS; channel++) {
-                for (int row = 0; row < BLOCK_SIZE; row++) {
-                    for (int col = 0; col < BLOCK_SIZE; col++) {
+            for (int channel = 0; channel < NUM_CHANNELS && !endOfFile; channel++) {
+                for (int row = 0; row < BLOCK_SIZE && !endOfFile; row++) {
+                    for (int col = 0; col < BLOCK_SIZE && !endOfFile; col++) {
                         int rgb = readAndCheckInt(dis);         // current channel value at (row, col)
                         
                         block[row][col][channel] = rgb;         // R0...R7, then R8...R15, until R56...R63, 
@@ -259,6 +268,47 @@ public class MyDecoder {
         return scalars;
     }
 
+    // redo
+    private WritableImage formatFrame(List<List<int[][][]>> decompressedFrame) {
+        System.out.println("FORMATFRAME(): decompressedFrame size = # of macroblocks --> " + decompressedFrame.size());
+        
+        WritableImage frame = new WritableImage(WIDTH, HEIGHT); // initialize image for the current frame
+
+        PixelWriter writer = frame.getPixelWriter();    // writes RGB pixel data to frame image
+
+        for (int mb = 0; mb < decompressedFrame.size(); mb++) {
+            List<int[][][]> currMacroblock = decompressedFrame.get(mb);
+
+            int mbRow = mb / MACROBLOCKS_PER_ROW;
+            int mbCol = mb % MACROBLOCKS_PER_ROW;
+            int mbX = mbCol * MACROBLOCK_SIZE;
+            int mbY = mbRow * MACROBLOCK_SIZE;
+
+            for (int b = 0; b < BLOCKS_PER_MACROBLOCK; b++) {
+                int[][][] currBlock = currMacroblock.get(b);
+
+                int bRow = b / (BLOCKS_PER_MACROBLOCK / 2);
+                int bCol = b % (BLOCKS_PER_MACROBLOCK / 2);
+                int bX = mbX + bCol * BLOCK_SIZE;
+                int bY = mbY + bRow * BLOCK_SIZE;
+
+                for (int r = 0; r < BLOCK_SIZE; r++) {
+                    for (int c = 0; c < BLOCK_SIZE; c++) {
+                        int red = currBlock[r][c][0];
+                        int green = currBlock[r][c][1];
+                        int blue = currBlock[r][c][2];
+
+                        int rgb = packArgb(red, green, blue);
+                        writer.setArgb(bX + c, bY + r, rgb);      // adjust r and c to reflect frame x, y
+                    }
+                }
+            }
+        }
+
+        return frame;
+    }
+
+    /** 
     // convert curr frame (decompressed macroblocks) to a WritableImage
     private WritableImage formatFrame(List<List<int[][][]>> decompressedFrame) {
         WritableImage frame = new WritableImage(WIDTH, HEIGHT); // initialize image for the current frame
@@ -296,6 +346,7 @@ public class MyDecoder {
         
         return frame;
     }
+        */
 
     /** packArgb
     * Packs given RGB channels into one ARGB value
@@ -336,6 +387,10 @@ public class MyDecoder {
         File encoderFile = new File(args[0]);   // input = MyEncoder .cmp output file 
         String audioPath = args[1];             // input = MP3 audio file --> store just path for now
 
+        System.out.println("\nINPUT: ");
+        System.out.println("encoderFile: " + encoderFile.getName());
+        System.out.println("audioPath: " + audioPath + "\n");
+        
         MyDecoder decoder = new MyDecoder(encoderFile, audioPath);
 
         decoder.parseFile();

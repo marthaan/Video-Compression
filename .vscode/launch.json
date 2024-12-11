@@ -23,7 +23,8 @@
 			"request": "launch",
 			"mainClass": "MyEncoder",
 			"args": [
-				"/Users/marthaannwilliams/Desktop/shortvideo.rgb",
+				// "/Users/marthaannwilliams/Desktop/shortvideo.rgb",
+				"/Users/marthaannwilliams/Desktop/USC/CSCI_576/day1/1.rgb",
 				"2",
 				"1"
 			]
@@ -34,7 +35,7 @@
 			"request": "launch",
 			"mainClass": "MyDecoder",
 			"args": [
-				"/Users/marthaannwilliams/Desktop/shortvideo.cmp",
+				"/Users/marthaannwilliams/Desktop/2frames.cmp",
 				"/Users/marthaannwilliams/Desktop/USC/CSCI_576/day1/1.wav"
 			],
 			"vmArgs": "--module-path /Users/marthaannwilliams/Downloads/javafx-sdk-23.0.1/lib --add-modules javafx.base,javafx.controls,javafx.media,javafx.fxml,javafx.graphics"
