@@ -37,8 +37,11 @@ public class cmpTester {
                         // Read the 8x8 block of coefficients for the current channel
                         for (int row = 0; row < BLOCK_SIZE; row++) {
                             for (int col = 0; col < BLOCK_SIZE; col++) {
-                                int coefficient = dis.readInt(); // Read coefficient for current channel
-                                writer.write(coefficient + "\t");
+                                if (dis.available() != 0) {
+                                    int coefficient = dis.readInt(); // Read coefficient for current channel
+                                    writer.write(coefficient + "\t");
+                                }
+                                
                             }
                             writer.write("\n");
                         }

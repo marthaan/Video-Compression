@@ -6,6 +6,13 @@
 	"configurations": [
 		{
 			"type": "java",
+			"name": "CompressionTester",
+			"request": "launch",
+			"mainClass": "Test.CompressionTester",
+			"projectName": "FinalProject_27c807"
+		},
+		{
+			"type": "java",
 			"name": "cmpTester",
 			"request": "launch",
 			"mainClass": "Test.cmpTester",
@@ -24,7 +31,6 @@
 			"mainClass": "MyEncoder",
 			"args": [
 				"/Users/marthaannwilliams/Desktop/shortvideo.rgb",
-				// "/Users/marthaannwilliams/Desktop/USC/CSCI_576/day1/1.rgb",
 				"2",
 				"1"
 			]
@@ -51,7 +57,7 @@
 			"type": "java",
 			"name": "AudioVideoPlayer",
 			"request": "launch",
-			"mainClass": "AudioVideoPlayer", 
+			"mainClass": "AudioVideoPlayer",
 			"vmArgs": "--module-path /Users/marthaannwilliams/Downloads/javafx-sdk-23.0.1/lib --add-modules javafx.base,javafx.controls,javafx.media,javafx.fxml,javafx.graphics"
 		}
 	]

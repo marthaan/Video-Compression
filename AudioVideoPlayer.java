@@ -38,8 +38,8 @@ public class AudioVideoPlayer extends Application {
         
         MyDecoder decoder = new MyDecoder(encoderFile, audioPath);
 
-        // frames = decoder.testFrames();  // Fetch frames from MyDecoder --> can also use this to pass in file and audio
-        frames = decoder.getFrames();    // gets actual frames 
+        frames = decoder.testFrames();  // Fetch frames from MyDecoder --> can also use this to pass in file and audio
+        // frames = decoder.getFrames();    // gets actual frames 
 
         // If no frames are found, handle gracefully
         if (frames == null || frames.isEmpty()) {
