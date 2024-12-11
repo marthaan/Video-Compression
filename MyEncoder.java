@@ -472,8 +472,6 @@ public class MyEncoder {
      * @return
      */
     private List<int[][][]> block(int[][][] macroblock) {
-        System.out.println("BLOCK()");
-        
         List<int[][][]> blocks = new ArrayList<>();
 
         // iterate over the whole macroblock, block-by-block
@@ -485,8 +483,8 @@ public class MyEncoder {
                 for (int i = 0; i < BLOCK_SIZE; i++) {
                     for (int j = 0; j < BLOCK_SIZE; j++) {
                         block[i][j][0] = macroblock[x + i][y + j][0];
-                        block[i][j][0] = macroblock[x + i][y + j][1];
-                        block[i][j][0] = macroblock[x + i][y + j][2];
+                        block[i][j][1] = macroblock[x + i][y + j][1];
+                        block[i][j][2] = macroblock[x + i][y + j][2];
                     }
                 }
 
@@ -498,8 +496,6 @@ public class MyEncoder {
     }
 
     private List<int[][][]> dct(List<int[][][]> blocks) {
-        System.out.println("DCT()");
-        
         List<int[][][]> dctBlocks = new ArrayList<>();
         
         for (int[][][] block : blocks) {
@@ -568,8 +564,6 @@ public class MyEncoder {
     }
 
     private List<int[][][]> quantize(List<int[][][]> dctBlocks, int layer) {
-        System.out.println("QUANTIZE()");
-        
         List<int[][][]> quantizedBlocks = new ArrayList<>();
 
         int step = 0;

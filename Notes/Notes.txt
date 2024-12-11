@@ -1,8 +1,12 @@
 project: layer-wise video compression
 
-MyEncoder
     to run: 
     java MyEncoder /Users/marthaannwilliams/Desktop/USC/CSCI_576/day1/1.rgb 2 1
+    java MyEncoder /Users/marthaannwilliams/Desktop/shortvideo.rgb 2 1
+
+    java MyDecoder /Users/marthaannwilliams/Desktop/shortvideo.cmp /Users/marthaannwilliams/Desktop/USC/CSCI_576/day1/1.wav
+
+MyEncoder
     - inputs:
         - input_video.rgb video file 
             - resolution = 960 x 540 pixels = 518,400 pixels = 518,400 * 3 bytes per frame

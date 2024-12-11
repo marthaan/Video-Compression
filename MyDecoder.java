@@ -99,7 +99,7 @@ public class MyDecoder {
         }
 
         WritableImage frameImage = formatFrame(decompressedFrame);
-        frames.add(frameImage);
+        //frames.add(frameImage);
 
         return endOfFile; 
     }
@@ -327,7 +327,7 @@ public class MyDecoder {
     // will need to display input video and output video 
         // want to be able to see OG video vs. compressed-decompressed video 
     private void display() {
-        AudioVideoPlayer player = new AudioVideoPlayer(frames, audioPath);
+        // AudioVideoPlayer player = new AudioVideoPlayer(frames, audioPath);
         // player.run();
     }
 

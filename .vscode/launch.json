@@ -3,40 +3,49 @@
 	// Hover to view descriptions of existing attributes.
 	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
 	"version": "0.2.0",
-	"configurations": [	  
-		// general launch configuration --> runs whichever file you're currently editing
+	"configurations": [
+		{
+			"type": "java",
+			"name": "cmpTester",
+			"request": "launch",
+			"mainClass": "Test.cmpTester",
+			"projectName": "FinalProject_27c807"
+		},
 		{
 			"type": "java",
 			"name": "Current File",
 			"request": "launch",
-			"mainClass": "${file}",
+			"mainClass": "${file}"
 		},
-		// MyEncoder launch configuration --> runs and outputs compressed video file
 		{
 			"type": "java",
 			"name": "MyEncoder",
 			"request": "launch",
-			"mainClass": "MyEncoder"
-			// "projectName": "VideoCompression_da3e0023",					
-			// "args": "../video/rgbs/WalkingStaticBackground.rgb 1 2"		
+			"mainClass": "MyEncoder",
+			"args": [
+				"/Users/marthaannwilliams/Desktop/shortvideo.rgb",
+				"2",
+				"1"
+			]
 		},
-		// MyDecoder launch configuration --> runs and decompresses video file --> can just use one below if decoder never run without display
 		{
-			"type": "java", 
+			"type": "java",
 			"name": "MyDecoder",
-			"request": "launch", 
-			"mainClass": "MyDecoder"
+			"request": "launch",
+			"mainClass": "MyDecoder",
+			"args": [
+				"/Users/marthaannwilliams/Desktop/shortvideo.cmp",
+				"/Users/marthaannwilliams/Desktop/USC/CSCI_576/day1/1.wav"
+			],
+			"vmArgs": "--module-path /Users/marthaannwilliams/Downloads/javafx-sdk-23.0.1/lib --add-modules javafx.base,javafx.controls,javafx.media,javafx.fxml,javafx.graphics"
 		},
-		// JavaFX App launch configuration --> MyDecoder = entry point for AVplayer (aka JavaFX App)
 		{
 			"type": "java",
 			"name": "JavaFX App",
 			"request": "launch",
-			"mainClass": "MyDecoder",	
+			"mainClass": "MyDecoder",
 			"vmArgs": "--module-path /Users/marthaannwilliams/Downloads/javafx-sdk-23.0.1/lib --add-modules javafx.base,javafx.controls,javafx.media,javafx.fxml,javafx.graphics"
-			// "vmArgs": "--module-path /Users/greg/Downloads/javafx-sdk-23.0.1/lib --add-modules javafx.base,javafx.controls,javafx.media,javafx.fxml,javafx.graphics"
 		},
-		// AVplayer launch configuration --> not necessary if does not have a main()
 		{
 			"type": "java",
 			"name": "AudioVideoPlayer",
