@@ -23,8 +23,8 @@
 			"request": "launch",
 			"mainClass": "MyEncoder",
 			"args": [
-				// "/Users/marthaannwilliams/Desktop/shortvideo.rgb",
-				"/Users/marthaannwilliams/Desktop/USC/CSCI_576/day1/1.rgb",
+				"/Users/marthaannwilliams/Desktop/shortvideo.rgb",
+				// "/Users/marthaannwilliams/Desktop/USC/CSCI_576/day1/1.rgb",
 				"2",
 				"1"
 			]

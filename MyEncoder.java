@@ -71,7 +71,7 @@ public class MyEncoder {
             
             FileInputStream fis = new FileInputStream(inputFile);
 
-            for (int i = 0; readFrame(fis); i++) {  
+            for (int i = 0; i < 1 && readFrame(fis); i++) {  // DEBUG: GET 1 FRAME
                 // if not I-frame --> if P-frame
                 if (i != 0) {
                     processPFrame();
@@ -452,11 +452,13 @@ public class MyEncoder {
     // ----- PART 2: COMPRESSION -----
     
     /**
-     * Carries out compression steps 
+     * Carries out compression steps on the current frame's macroblocks 
      * @param macroblocks
      */
     private void compress(List<int[][][]> macroblocks) {
         System.out.println("----- PART 2: COMPRESSION -----");
+
+        // open dataoutputstream, pass to writeMacroblock --> one output stream per frame 
         
         for (int i = 0; i < macroblocks.size(); i++) {
             List<int[][][]> blocks = block(macroblocks.get(i));

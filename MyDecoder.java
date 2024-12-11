@@ -25,7 +25,7 @@ public class MyDecoder {
     
     private static final int MACROBLOCKS_PER_ROW = 60;          
     private static final int MACROBLOCKS_PER_COL = 34;          // 33.75 ~= 34
-    private static final int MACROBLOCKS_PER_FRAME = MACROBLOCKS_PER_ROW * MACROBLOCKS_PER_COL;                  
+    private static final int MACROBLOCKS_PER_FRAME = MACROBLOCKS_PER_ROW * MACROBLOCKS_PER_COL;     // 2040             
     private static final int BLOCKS_PER_MACROBLOCK = 4;
 
     private static final int MACROBLOCK_SIZE = 16;
