@@ -5,10 +5,10 @@
         "label": "build",
         "type": "shell",
         "command": "/usr/bin/javac",
-        // "command": "javac",
         "args": [
           "--module-path",
-          "/Users/greg/Downloads/javafx-sdk-23.0.1/lib",   // path to javaFX folder --> will be diff. for Greg
+          "/Users/marthaannwilliams/Downloads/javafx-sdk-23.0.1/lib",   // path to javaFX folder --> will be diff. for Greg
+          // "/Users/greg/Downloads/javafx-sdk-23.0.1/lib",   // path to javaFX folder --> will be diff. for Greg
           "--add-modules",      // specifies which javaFX modules (jars) to add
           "javafx.base,javafx.controls,javafx.media,javafx.fxml,javafx.graphics",   // modules added
           "-d",                 // specifies output directory 
