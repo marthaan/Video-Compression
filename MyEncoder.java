@@ -78,6 +78,7 @@ public class MyEncoder {
                 }
                 // if I-frame
                 else {
+                    System.out.println("Processing I-Frame");
                     processIFrame();
                 }
                 
@@ -205,20 +206,26 @@ public class MyEncoder {
         // }
 
         // iterate over frame macroblock-by-macroblock
-        for (int y = 0; y < HEIGHT; y += MACROBLOCK_SIZE) {
-            for (int x = 0; x < WIDTH; x += MACROBLOCK_SIZE) {
+        for (int row = 0; row < HEIGHT; row += MACROBLOCK_SIZE) {
+            for (int col = 0; col < WIDTH; col += MACROBLOCK_SIZE) {
                 // create the current 16x16 macroblock to hold RGB channel data
                 int[][][] macroblock = new int[MACROBLOCK_SIZE][MACROBLOCK_SIZE][3];
                 
                 // iterate over each pixel within the current macroblock
-                for (int i = 0; i < MACROBLOCK_SIZE; i++) {
-                    for (int j = 0; j < MACROBLOCK_SIZE; j++) {
+                for (int r = 0; r < MACROBLOCK_SIZE; r++) {
+                    for (int c = 0; c < MACROBLOCK_SIZE; c++) {
                         // to account for shortened macroblocks
-                        if (y + j < HEIGHT) {
+                        if (row + r < HEIGHT && col + c < WIDTH) {  // if last row of frame or
                             // assign the current pixel's RGB values to the current macroblock
-                            macroblock[i][j][0] = currFrame3DArray[x + i][y + j][0];     // red channel
-                            macroblock[i][j][1] = currFrame3DArray[x + i][y + j][1];     // green channel
-                            macroblock[i][j][2] = currFrame3DArray[x + i][y + j][2];     // blue channel
+                            macroblock[r][c][0] = currFrame3DArray[row + r][col + c][0];     // red channel
+                            macroblock[r][c][1] = currFrame3DArray[row + r][col + c][1];     // green channel
+                            macroblock[r][c][2] = currFrame3DArray[row + r][col + c][2];     // blue channel
+                        }
+                        else {
+                             // pad partial macroblock with 0s 
+                             macroblock[r][c][0] = 0;     // red channel
+                             macroblock[r][c][1] = 0;     // green channel
+                             macroblock[r][c][2] = 0;     // blue channel
                         }
                     }
                 }

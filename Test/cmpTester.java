@@ -29,7 +29,7 @@ public class cmpTester {
                 writer.write("Block Type: " + blockType + "\n");
 
                 // Read quantized blocks
-                for (int block = 0; block < 4; block++) { // assuming each macroblock is one quantized block
+                for (int block = 0; block < 1; block++) { // assuming each macroblock is one quantized block
                     // Each quantized block has three color channels (R, G, B)
                     for (int channel = 0; channel < 3; channel++) {
                         writer.write("Channel " + (channel == 0 ? "R" : (channel == 1 ? "G" : "B")) + ":\n");
