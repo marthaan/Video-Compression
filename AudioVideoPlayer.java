@@ -1,47 +1,3 @@
-import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
-import javafx.scene.paint.Color;
-import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;
-
-/**
-public class AudioVideoPlayer extends Application {
-
-    @Override
-    public void start(Stage primaryStage) {
-        // Create a WritableImage (let's say 960x540 with solid red color)
-        int width = 960;
-        int height = 540;
-
-        WritableImage writableImage = new WritableImage(width, height);
-
-        // Set all pixels of the image to a solid color (e.g., red)
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                writableImage.getPixelWriter().setColor(x, y, Color.RED);  // Red color
-            }
-        }
-
-        // Set up ImageView to display the image
-        ImageView imageView = new ImageView(writableImage);
-        StackPane root = new StackPane();
-        root.getChildren().add(imageView);
-
-        // Set up the Scene and Stage
-        Scene scene = new Scene(root, width, height);
-        primaryStage.setTitle("Solid Color Image Test");
-        primaryStage.setScene(scene);
-        primaryStage.show();
-    }
-
-    public static void main(String[] args) {
-        launch(args);  // Starts the JavaFX application
-    }
-}
- */
-
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -52,37 +8,45 @@ import javafx.scene.paint.Color;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class AudioVideoPlayer extends Application {
 
-    @Override
-    public void start(Stage primaryStage) {
-        // Create a list of WritableImages with different solid colors
-        List<WritableImage> frames = new ArrayList<>();
-        int width = 960;
-        int height = 540;
-        Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.PURPLE};
+    private List<WritableImage> frames;  // Store frames to display
 
-        // Generate a WritableImage for each color and add it to the list
-        for (Color color : colors) {
-            WritableImage writableImage = new WritableImage(width, height);
-            for (int x = 0; x < width; x++) {
-                for (int y = 0; y < height; y++) {
-                    writableImage.getPixelWriter().setColor(x, y, color);  // Fill with the color
-                }
-            }
-            frames.add(writableImage);  // Add image to the list
+    // This method is responsible for fetching frames and displaying them
+    private void loadAndDisplayFrames() {
+        // Example: Passing dummy paths to the decoder (update with real paths)
+        File encoderFile = new File("/Users/marthaannwilliams/Desktop/2frames.cmp");
+        String audioPath = "/Users/marthaannwilliams/Desktop/USC/CSCI_576/day1/1.wav";
+        
+        MyDecoder decoder = new MyDecoder(encoderFile, audioPath);
+
+        frames = decoder.testFrames();  // Fetch frames from MyDecoder --> can also use this to pass in file and audio
+
+        // If no frames are found, handle gracefully
+        if (frames == null || frames.isEmpty()) {
+            System.out.println("No frames available to display.");
+            return;
         }
 
+        // Proceed to display the frames
+        displayFrames();
+    }
+
+    private void displayFrames() {
         // Set up the ImageView to display the images
         ImageView imageView = new ImageView();
         StackPane root = new StackPane();
         root.getChildren().add(imageView);
 
         // Set up the Scene and Stage
-        Scene scene = new Scene(root, width, height);
+        Scene scene = new Scene(root, 960, 540);
+        Stage primaryStage = new Stage();
         primaryStage.setTitle("Solid Color Image Sequence");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -103,7 +67,12 @@ public class AudioVideoPlayer extends Application {
         timeline.play();
     }
 
+    @Override
+    public void start(Stage primaryStage) {
+        loadAndDisplayFrames();  // Start loading and displaying frames
+    }
+
     public static void main(String[] args) {
-        launch(args);  // Starts the JavaFX application
+        launch(args);  // Start the JavaFX application
     }
 }

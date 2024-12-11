@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
+import javafx.application.Platform;
 import javafx.scene.image.PixelWriter;
 
 
@@ -404,14 +406,38 @@ public class MyDecoder {
         // want to be able to see OG video vs. compressed-decompressed video 
     private void displayAV() {
         AudioVideoPlayer player = new AudioVideoPlayer();
-        // player.setInputData(frames, audioPath);
 
-        if (frames == null) { System.out.println("\n---DISPLAY() --> NULL. FRAMES"); }
-        System.out.println("\n---DISPLAY() --> CURR FRAMELIST SIZE: " + frames.size());
+        if (frames == null || frames.isEmpty()) { 
+            System.out.println("\n---DISPLAY() --> NULL. FRAMES");
+            return; 
+        }
 
-        // player.setInputData(frames);    // need to add audio
-        // System.out.println(player.testFrameInit());
-        // player.display();
+                // Use Platform.runLater to ensure the frame list is passed on the correct thread
+        //Platform.runLater(() -> {
+          //  player.setInputData(testFrames());
+            //player.display();  // Ensure display is called on JavaFX thread
+       // });
+    }
+
+    // test
+    public List<WritableImage> testFrames() {       // if this works, use this to initialize the decoder obj with file and audio
+        int width = 960;
+        int height = 540;
+        Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.PURPLE};  // Example colors
+
+        List<WritableImage> list = new ArrayList<>();
+
+        for (Color color : colors) {
+            WritableImage writableImage = new WritableImage(width, height);
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    writableImage.getPixelWriter().setColor(x, y, color);  // Fill with the color
+                }
+            }
+            list.add(writableImage);  // Add image to the list
+        }
+
+        return list;
     }
 
 
@@ -427,6 +453,6 @@ public class MyDecoder {
 
         decoder.parseFile();
 
-        decoder.displayAV();
+        // decoder.displayAV();
     }
 }
