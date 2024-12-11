@@ -61,9 +61,9 @@ public class MyDecoder {
 
             // process file one frame at a time, until EOF
             for (int f = 0; !endOfFile; f++) {
-                boolean frameProcessed = processFrame(dis);
+                boolean frameProcessed = processFrame(dis);     // should be endOfFrame vs endOfFile
 
-                if (!frameProcessed) { 
+                if (!frameProcessed) {  // need to fix to deal with parsing errors vs. just EOF 
                     System.out.println("ERROR: parseFile() --> frame not processed");
                     endOfFile = true;   // redundant but shouldn't cause errors
                     break;
@@ -94,24 +94,25 @@ public class MyDecoder {
 
         // loop over one frame at a time = 2040 macroblocks at a time
         for (int m = 0; m < MACROBLOCKS_PER_FRAME && !endOfFile; m++) {
-            System.out.println("PROCESSFRAME(): ");
-            System. out.println("m: " + m);
-            
             // get & decompress curr macroblock
             int currBlockType = readAndCheckInt(dis);
             List<int[][][]> currMacroblock = parseMacroblock(currBlockType, dis);
             List<int[][][]> decompressedMacroblock = decompress(currMacroblock, currBlockType);
 
-            // System.out.println("currMacroblock.size(): " + currMacroblock.size());
-
             // add decompressed macroblock to frame list
             decompressedFrame.add(decompressedMacroblock);
+
+            // if all expected macroblocks of frame processed
+            if (m == MACROBLOCKS_PER_FRAME - 1) {
+                System.out.println("LAST MACROBLOCK OF FRAME PROCESSED --> FRAME SUCCESSFULLY PARSED");
+                return true;
+            }
         }
 
-        // WritableImage frameImage = formatFrame(decompressedFrame);
-        // frames.add(frameImage);
+        WritableImage frameImage = formatFrame(decompressedFrame);
+        frames.add(frameImage);
 
-        return endOfFile; 
+        return false; 
     }
 
     // parses the current macroblock 
@@ -127,13 +128,9 @@ public class MyDecoder {
         for (int b = 0; b < BLOCKS_PER_MACROBLOCK && !endOfFile; b++) {
             int[][][] block = new int[BLOCK_SIZE][BLOCK_SIZE][NUM_CHANNELS];
 
-            System.out.println("PARSEMACROBLOCK()");
-            System.out.println("b: " + b);
             
             if (b > 0) { 
                 int currBlockType = readAndCheckInt(dis);
-
-                System.out.println("currBlockType: " + currBlockType);
 
                 if (currBlockType != blockType) { 
                     System.out.println("ERROR: parseMacroblock() --> mismatched block types");
@@ -147,10 +144,7 @@ public class MyDecoder {
             for (int channel = 0; channel < NUM_CHANNELS && !endOfFile; channel++) {
                 for (int row = 0; row < BLOCK_SIZE && !endOfFile; row++) {
                     for (int col = 0; col < BLOCK_SIZE && !endOfFile; col++) {
-                        // int rgb = readAndCheckInt(dis);         // current channel value at (row, col) --> can be -1 since quant vals 
-
-                        // System.out.println("rgb: " + rgb);
-                        
+                        // get current channel value at (row, col) --> can be -1 since quant vals 
                         block[row][col][channel] = dis.readInt();         // R0...R7, then R8...R15, until R56...R63, 
                     }
                 }
