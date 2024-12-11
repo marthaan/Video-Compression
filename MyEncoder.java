@@ -23,7 +23,7 @@ public class MyEncoder {
 
     private static final int MACROBLOCK_SIZE = 16;
     private static final int BLOCK_SIZE = 8;
-    private static final int SEARCH_PARAMETER_K = 5;
+    private static final int SEARCH_PARAMETER_K = 3;
     // this variable denotes the amount of variance allowed in choosing which macroblocks are background macroblocks
     // it should stay between zero (meaning the motion vector must match the most common motion vector exactly)
     // to, at maximum, SEARCH_PARAMETER_K
@@ -88,9 +88,9 @@ public class MyEncoder {
             }
 
             // DEBUG: prints last 90 RGB values of last frame
-            for (int i = 0; i < 30; i += 3) {
-                System.out.printf("R: %d, G: %d, B: %d\n", currFrame[i], currFrame[i + 1], currFrame[i + 2]);
-            }
+            // for (int i = 0; i < 30; i += 3) {
+            //     System.out.printf("R: %d, G: %d, B: %d\n", currFrame[i], currFrame[i + 1], currFrame[i + 2]);
+            // }
 
             fis.close();
         } catch (IOException e) {
@@ -151,16 +151,16 @@ public class MyEncoder {
         layers = getLayers();
 
         // DEBUG: print out layers array
-        int numMacroblocksWide = (int)Math.ceil(WIDTH / (double)MACROBLOCK_SIZE);
-        int numMacroblocksHigh = (int)Math.ceil(HEIGHT / (double)MACROBLOCK_SIZE);
-        for (int y = 0; y < numMacroblocksHigh; y++) {
-            for (int x = 0; x < numMacroblocksWide; x++) {
-                int index = y * numMacroblocksWide + x;
-                System.out.print(layers.get(index));
-                // System.out.print("(" + motionVectors.get(index)[0] + " " + motionVectors.get(index)[1] + ")");
-            }
-            System.out.println();
-        }
+        // int numMacroblocksWide = (int)Math.ceil(WIDTH / (double)MACROBLOCK_SIZE);
+        // int numMacroblocksHigh = (int)Math.ceil(HEIGHT / (double)MACROBLOCK_SIZE);
+        // for (int y = 0; y < numMacroblocksHigh; y++) {
+        //     for (int x = 0; x < numMacroblocksWide; x++) {
+        //         int index = y * numMacroblocksWide + x;
+        //         System.out.print(layers.get(index));
+        //         // System.out.print("(" + motionVectors.get(index)[0] + " " + motionVectors.get(index)[1] + ")");
+        //     }
+        //     System.out.println();
+        // }
 
         // PART 2: COMPRESSION
         compress(currMacroblocks);
@@ -172,12 +172,13 @@ public class MyEncoder {
     // initial output .cmp file setup
     // writes n1, n2 once then closes this writer
     private void setupOutputFile() {
-        try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(outputFile))) {
-            // create output file name by changing file.rgb to file.cmp
-            String fileName = inputFile.getName();
-            fileName = fileName.substring(0, fileName.length() - 3);
+        // create output file name by changing file.rgb to file.cmp
+        String fileName = inputFile.getName();
+        fileName = fileName.substring(0, fileName.length() - 3);
 
-            outputFile = new File(fileName + "cmp");
+        outputFile = new File(fileName + "cmp");
+
+        try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(outputFile))) {
             
             dos.writeInt(n1);
             dos.writeInt(n2);
@@ -199,11 +200,12 @@ public class MyEncoder {
 
         currFrame3DArray = convertTo3DArray(currFrame);
 
-        try {
-            MacroblockViewer.saveMacroblock(currFrame3DArray, "macroblock.png");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // DEBUG
+        // try {
+        //     MacroblockViewer.saveMacroblock(currFrame3DArray, "macroblock.png");
+        // } catch (Exception e) {
+        //     e.printStackTrace();
+        // }
 
         // iterate over frame macroblock-by-macroblock
         for (int y = 0; y < HEIGHT; y += MACROBLOCK_SIZE) {
@@ -605,7 +607,7 @@ public class MyEncoder {
                 dos.writeInt(blockType);
 
                 // write all R, then G, then B values of current block 
-                for (int channel = 0; channel < CHANNEL_SIZE; channel++) {
+                for (int channel = 0; channel < 3; channel++) {
                     for (int row = 0; row < BLOCK_SIZE; row++) {
                         for (int col = 0; col < BLOCK_SIZE; col++) {
                             dos.writeInt(quantizedBlock[row][col][channel]);  // current coefficient for current channel
