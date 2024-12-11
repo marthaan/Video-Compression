@@ -61,7 +61,7 @@ public class MyDecoder {
 
             // process file one frame at a time, until EOF
             for (int f = 0; !endOfFile; f++) {
-                boolean frameProcessed = processFrame(dis);     // should be endOfFrame vs endOfFile
+                boolean frameProcessed = processFrame(dis);     // false = endOfFrame vs endOfFile
 
                 if (!frameProcessed) {  // need to fix to deal with parsing errors vs. just EOF 
                     System.out.println("ERROR: parseFile() --> frame not processed");
@@ -79,9 +79,13 @@ public class MyDecoder {
 
     // .readInt(dis) but checks it & updates endOfFile if needed
     private int readAndCheckInt(DataInputStream dis) throws IOException {
+        if (dis.available() == 0) {     // no more bytes available
+            endOfFile = true; 
+            System.out.println("END OF FILE\n");
+            return -1;
+        }
+        
         int nextInt = dis.readInt();
-
-        if (nextInt == -1) { endOfFile = true; }
 
         return nextInt;
     }
@@ -92,12 +96,15 @@ public class MyDecoder {
     private boolean processFrame(DataInputStream dis) throws IOException {
         List<List<int[][][]>> decompressedFrame = new ArrayList<>();    // list of all decomp. macroblocks for the curr frame
 
+        boolean frameProcessed = false;
+
         // loop over one frame at a time = 2040 macroblocks at a time
         for (int m = 0; m < MACROBLOCKS_PER_FRAME && !endOfFile; m++) {
             // get & decompress curr macroblock
             int currBlockType = readAndCheckInt(dis);
             List<int[][][]> currMacroblock = parseMacroblock(currBlockType, dis);
             List<int[][][]> decompressedMacroblock = decompress(currMacroblock, currBlockType);
+            // System.out.println("DECOMP CURR MACROBLOCK SIZE: " + decompressedMacroblock.size());
 
             // add decompressed macroblock to frame list
             decompressedFrame.add(decompressedMacroblock);
@@ -105,14 +112,16 @@ public class MyDecoder {
             // if all expected macroblocks of frame processed
             if (m == MACROBLOCKS_PER_FRAME - 1) {
                 System.out.println("LAST MACROBLOCK OF FRAME PROCESSED --> FRAME SUCCESSFULLY PARSED");
-                return true;
+                frameProcessed = true;
             }
         }
+
+        System.out.println("DECOMP FRAME SIZE: " + decompressedFrame.size() + "\n");
 
         WritableImage frameImage = formatFrame(decompressedFrame);
         frames.add(frameImage);
 
-        return false; 
+        return frameProcessed; 
     }
 
     // parses the current macroblock 
