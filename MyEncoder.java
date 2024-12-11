@@ -31,6 +31,7 @@ public class MyEncoder {
     
     private int[][][] prevFrame3DArray;
     
+    // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
     private int[] currFrame;
     private int[][][] currFrame3DArray;
     private List<int[][][]> currMacroblocks;
@@ -49,8 +50,6 @@ public class MyEncoder {
         this.inputFile = inputFile; 
         this.n1 = n1;
         this.n2 = n2;
-
-        // initialize everything?
 
         currFrame = new int[FRAME_SIZE];
         currFrame3DArray = new int[WIDTH][HEIGHT][3];
@@ -73,7 +72,6 @@ public class MyEncoder {
             FileInputStream fis = new FileInputStream(inputFile);
 
             for (int i = 0; readFrame(fis); i++) {
-
                 // if not I-frame --> if P-frame
                 if (i != 0) {
                     processPFrame();
@@ -124,7 +122,6 @@ public class MyEncoder {
      */
     private void processIFrame() {
         // PART 1: VIDEO SEGMENTATION
-        // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
         currMacroblocks = macroblock(); // still macroblock so compression steps can be the same
 
         // all layers are quantized with foreground step
@@ -145,7 +142,6 @@ public class MyEncoder {
      */
     private void processPFrame() {
         // PART 1: VIDEO SEGMENTATION
-        // goal: macroblocks[i] has motion vector at motionVectors[i] and has layer type at layers[i]
         currMacroblocks = macroblock();             
         motionVectors = generateMotionVectorArray(currMacroblocks);
         layers = getLayers();
@@ -179,7 +175,6 @@ public class MyEncoder {
         outputFile = new File(fileName + "cmp");
 
         try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(outputFile))) {
-            
             dos.writeInt(n1);
             dos.writeInt(n2);
         }
@@ -196,6 +191,8 @@ public class MyEncoder {
      * @return a list of 16x16 macroblocks, each containing RGB channel data
      */
     private List<int[][][]> macroblock() {
+        System.out.println("----- PART 1: VIDEO SEGMENTATION -----");
+        
         List<int[][][]> macroblocks = new ArrayList<>();    // int[x][y][r, g, or b val for (x, y)]
 
         currFrame3DArray = convertTo3DArray(currFrame);
@@ -459,6 +456,8 @@ public class MyEncoder {
      * @param macroblocks
      */
     private void compress(List<int[][][]> macroblocks) {
+        System.out.println("----- PART 2: COMPRESSION -----");
+        
         for (int i = 0; i < macroblocks.size(); i++) {
             List<int[][][]> blocks = block(macroblocks.get(i));
             List<int[][][]> dctBlocks = dct(blocks);
@@ -600,6 +599,8 @@ public class MyEncoder {
     // scan blocks current macroblock of current frame into output .cmp file
     // most secure to use a new writer for each macroblock instead of each frame/whole file but will see if this makes it slow 
     private void writeMacroblock(int blockType, List<int[][][]> quantizedBlocks) {
+        System.out.println("----- WRITING COMPRESSED MACROBLOCK -----");
+        
         // open new writer for each macroblock, write macroblock, close writer
         try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(outputFile, true))) {
             for (int[][][] quantizedBlock : quantizedBlocks) {
@@ -619,6 +620,8 @@ public class MyEncoder {
         catch (IOException e) {
             e.printStackTrace();
         }
+        
+        System.out.println("----- DONE WRITING MACROBLOCK-----");
     }
 
 
