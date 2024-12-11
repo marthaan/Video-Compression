@@ -51,7 +51,8 @@
 			"type": "java",
 			"name": "AudioVideoPlayer",
 			"request": "launch",
-			"mainClass": "AudioVideoPlayer"
+			"mainClass": "AudioVideoPlayer", 
+			"vmArgs": "--module-path /Users/marthaannwilliams/Downloads/javafx-sdk-23.0.1/lib --add-modules javafx.base,javafx.controls,javafx.media,javafx.fxml,javafx.graphics"
 		}
 	]
 }
