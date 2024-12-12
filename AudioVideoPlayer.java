@@ -1,49 +1,112 @@
-import java.util.List;
-
-import javafx.application.Application;  // in base jar
-import javafx.scene.Scene;              // in base jar
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
+import javafx.scene.layout.StackPane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
-import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;              // in base jar
+import javafx.stage.Stage;
+import javafx.util.Duration;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 
-// javaFX video player
-// play video at frame rate w/ synchronized sound
-    // must be able to play, pause, and step thru video frames
 public class AudioVideoPlayer extends Application {
-    List<WritableImage> frames;
-    String audioPath;
 
-    public AudioVideoPlayer(List<WritableImage> frames, String audioPath) {
-        this.frames = frames;
-        this.audioPath = audioPath;
-    }
-    
+    private List<WritableImage> frames;  // Store frames to display
+    private MediaPlayer mediaPlayer;
+
+
     @Override
     public void start(Stage primaryStage) {
-        // test code, will change
-        // Example: Create a simple media player for video and audio
-        String mediaUrl = "file:///path/to/your/video_or_audio.mp4"; // Update this path
-        Media media = new Media(mediaUrl);
-        MediaPlayer mediaPlayer = new MediaPlayer(media);
+        loadAndDisplayFrames();  // Start loading and displaying frames
+    }
 
-        // Create a basic layout for the window
+    // runs decoder to get decompressed frames 
+    // initiates display process
+    private void loadAndDisplayFrames() {
+        // Example: Passing dummy paths to the decoder (update with args)
+        // File encoderFile = new File("/Users/marthaannwilliams/Desktop/2frames.cmp");
+        // File encoderFile = new File("1.cmp");
+        File encoderFile = new File("WalkingStaticBackground.cmp");      // should only hold one i frame 
+        String audioPath = "/Users/greg/Desktop/1.wav";
+        
+        MyDecoder decoder = new MyDecoder(encoderFile, audioPath);
+
+        // frames = decoder.testFrames();  // Fetch frames from MyDecoder --> can also use this to pass in file and audio
+        frames = decoder.getFrames();    // gets actual frames 
+
+        // DEBUG
+        System.out.println("Number of frames loaded: " + frames.size());
+        if (!frames.isEmpty()) {
+            WritableImage firstFrame = frames.get(0);
+            System.out.println("First frame dimensions: " + 
+                              firstFrame.getWidth() + "x" + 
+                              firstFrame.getHeight());
+        }
+
+        // If no frames are found, handle gracefully
+        if (frames == null || frames.isEmpty()) {
+            System.out.println("No frames available to display.");
+            return;
+        }
+
+        // Load the audio file
+        Media audioMedia = new Media(new File(audioPath).toURI().toString());
+        mediaPlayer = new MediaPlayer(audioMedia);
+
+        // Proceed to display the frames
+        displayFrames();
+    }
+
+    private void displayFrames() {
+        // Set up the ImageView to display the images
+        ImageView imageView = new ImageView();
+        imageView.setFitWidth(960);
+        imageView.setFitHeight(540);
+        imageView.setPreserveRatio(true);
         StackPane root = new StackPane();
-        Scene scene = new Scene(root, 800, 600);
+        root.getChildren().add(imageView);
 
-        primaryStage.setTitle("AudioVideoPlayer");
+        // Set up the Scene and Stage
+        Scene scene = new Scene(root, 960, 540);
+        Stage primaryStage = new Stage();
+        primaryStage.setTitle("Audio-Video Player");
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        // Play the media
+        double fps = 30.0;  // Adjust this value as needed
+        double frameDuration = 1.0 / fps;
+
+        // Create a Timeline to display the frames sequentially
+        Timeline timeline = new Timeline();
+        for (int i = 0; i < frames.size(); i++) {
+            final int frameIndex = i;
+            KeyFrame keyFrame = new KeyFrame(
+                    Duration.seconds(i * frameDuration),  // Delay between frames
+                    event -> imageView.setImage(frames.get(frameIndex))  // Set the current image
+            );
+            timeline.getKeyFrames().add(keyFrame);
+        }
+
+        // Play the timeline to show the images one by one
+        timeline.setCycleCount(Timeline.INDEFINITE);  // Infinite loop of frames
+
+        // Synchronize audio & video playback 
+        timeline.setCycleCount(1);      // play video sequence once
+        // timeline.setOnFinished(event -> mediaPlayer.stop());    // Stop audio when video ends
+        
+        // Start audio and video 
         mediaPlayer.play();
+        timeline.play();
     }
 
-    // may not need
-    // will probably need a public run() method or something instead 
     public static void main(String[] args) {
-        launch(args); // Starts the JavaFX application
-    }  
+        launch(args);  // Start the JavaFX application
+    }
 }

@@ -165,6 +165,7 @@ public class MyEncoder {
         // PART 2: COMPRESSION
         compress(currMacroblocks);
 
+
         // store in prevFrame:
         prevFrame3DArray = currFrame3DArray;
     }
@@ -484,8 +485,8 @@ public class MyEncoder {
                 for (int i = 0; i < BLOCK_SIZE; i++) {
                     for (int j = 0; j < BLOCK_SIZE; j++) {
                         block[i][j][0] = macroblock[x + i][y + j][0];
-                        block[i][j][0] = macroblock[x + i][y + j][1];
-                        block[i][j][0] = macroblock[x + i][y + j][2];
+                        block[i][j][1] = macroblock[x + i][y + j][1];
+                        block[i][j][2] = macroblock[x + i][y + j][2];
                     }
                 }
 

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
+import javafx.application.Platform;
 import javafx.scene.image.PixelWriter;
 
 
@@ -23,7 +25,7 @@ public class MyDecoder {
     
     private static final int MACROBLOCKS_PER_ROW = 60;          
     private static final int MACROBLOCKS_PER_COL = 34;          // 33.75 ~= 34
-    private static final int MACROBLOCKS_PER_FRAME = MACROBLOCKS_PER_ROW * MACROBLOCKS_PER_COL;                  
+    private static final int MACROBLOCKS_PER_FRAME = MACROBLOCKS_PER_ROW * MACROBLOCKS_PER_COL;     // 2040             
     private static final int BLOCKS_PER_MACROBLOCK = 4;
 
     private static final int MACROBLOCK_SIZE = 16;
@@ -56,15 +58,27 @@ public class MyDecoder {
             n1 = readAndCheckInt(dis);
             n2 = readAndCheckInt(dis);
 
+            System.out.println("PARSEFILE():");
+            System.out.println("n1, n2 parsed: " + n1 + ", " + n2 + "\n");
+
             // process file one frame at a time, until EOF
             for (int f = 0; !endOfFile; f++) {
-                boolean frameProcessed = processFrame(dis);
+                
 
-                if (!frameProcessed) { 
+                if (endOfFile) {
+                    System.out.println("---END OF FILE----");
+                }
+
+                boolean frameProcessed = processFrame(dis);     // false = endOfFrame vs endOfFile
+
+                if (!frameProcessed && !endOfFile) {  // need to fix to deal with parsing errors vs. just EOF 
                     System.out.println("ERROR: parseFile() --> frame not processed");
-                    endOfFile = true;
+                    endOfFile = true;   // redundant but shouldn't cause errors
                     break;
                 }
+
+
+                System.out.println("FRAME PROCESSED: " + f + "\n");
             }
         }
         catch (IOException e) {
@@ -74,9 +88,13 @@ public class MyDecoder {
 
     // .readInt(dis) but checks it & updates endOfFile if needed
     private int readAndCheckInt(DataInputStream dis) throws IOException {
+        if (dis.available() == 0) {     // no more bytes available
+            endOfFile = true; 
+            System.out.println("END OF FILE\n");
+            return -1;
+        }
+        
         int nextInt = dis.readInt();
-
-        if (nextInt == -1) { endOfFile = true; }
 
         return nextInt;
     }
@@ -87,21 +105,36 @@ public class MyDecoder {
     private boolean processFrame(DataInputStream dis) throws IOException {
         List<List<int[][][]>> decompressedFrame = new ArrayList<>();    // list of all decomp. macroblocks for the curr frame
 
+        boolean frameProcessed = false;
+
         // loop over one frame at a time = 2040 macroblocks at a time
         for (int m = 0; m < MACROBLOCKS_PER_FRAME && !endOfFile; m++) {
             // get & decompress curr macroblock
             int currBlockType = readAndCheckInt(dis);
             List<int[][][]> currMacroblock = parseMacroblock(currBlockType, dis);
             List<int[][][]> decompressedMacroblock = decompress(currMacroblock, currBlockType);
+            // System.out.println("DECOMP CURR MACROBLOCK SIZE: " + decompressedMacroblock.size());
+
 
             // add decompressed macroblock to frame list
             decompressedFrame.add(decompressedMacroblock);
+
+            // if all expected macroblocks of frame processed
+            if (m == MACROBLOCKS_PER_FRAME - 1) {
+                // System.out.println("LAST MACROBLOCK OF FRAME PROCESSED --> FRAME SUCCESSFULLY PARSED");
+                frameProcessed = true;
+            }
         }
 
-        WritableImage frameImage = formatFrame(decompressedFrame);
-        frames.add(frameImage);
+        // System.out.println("DECOMP FRAME SIZE: " + decompressedFrame.size() + "\n");
 
-        return endOfFile; 
+        if (!endOfFile) {
+            WritableImage frameImage = formatFrame(decompressedFrame);
+            frames.add(frameImage);
+
+        }
+
+        return frameProcessed; 
     }
 
     // parses the current macroblock 
@@ -116,8 +149,24 @@ public class MyDecoder {
         // loop over one macroblock at a time = 4 blocks at a time 
         for (int b = 0; b < BLOCKS_PER_MACROBLOCK && !endOfFile; b++) {
             int[][][] block = new int[BLOCK_SIZE][BLOCK_SIZE][NUM_CHANNELS];
+
+            // DEBUG
+            // if (b == 0) {
+            //     System.out.println("Reading first block of first macroblock:");
+            //     for (int channel = 0; channel < NUM_CHANNELS && !endOfFile; channel++) {
+            //         System.out.println("Channel " + channel + ":");
+            //         for (int row = 0; row < 2 && !endOfFile; row++) {  // Just print first 2 rows
+            //             for (int col = 0; col < 2 && !endOfFile; col++) {
+            //                 int value = dis.readInt();
+            //                 block[row][col][channel] = value;
+            //                 System.out.printf("(%d,%d): %d ", row, col, value);
+            //             }
+            //             System.out.println();
+            //         }
+            //     }
+            // }
             
-            if (b != 0) { 
+            if (b > 0) { 
                 int currBlockType = readAndCheckInt(dis);
 
                 if (currBlockType != blockType) { 
@@ -129,12 +178,20 @@ public class MyDecoder {
                 // nextInt should now be the first R value 
             }
             
-            for (int channel = 0; channel < NUM_CHANNELS; channel++) {
-                for (int row = 0; row < BLOCK_SIZE; row++) {
-                    for (int col = 0; col < BLOCK_SIZE; col++) {
-                        int rgb = readAndCheckInt(dis);         // current channel value at (row, col)
-                        
-                        block[row][col][channel] = rgb;         // R0...R7, then R8...R15, until R56...R63, 
+            // for (int channel = 0; channel < NUM_CHANNELS && !endOfFile; channel++) {
+            //     for (int row = 0; row < BLOCK_SIZE && !endOfFile; row++) {
+            //         for (int col = 0; col < BLOCK_SIZE && !endOfFile; col++) {
+            //             // get current channel value at (row, col) --> can be -1 since quant vals 
+            //             block[row][col][channel] = dis.readInt();         // R0...R7, then R8...R15, until R56...R63, 
+            //         }
+            //     }
+            // }
+
+            for (int row = 0; row < BLOCK_SIZE && !endOfFile; row++) {
+                for (int col = 0; col < BLOCK_SIZE && !endOfFile; col++) {
+                    for (int channel = 0; channel < NUM_CHANNELS && !endOfFile; channel++) {
+                        // get current channel value at (row, col) --> can be -1 since quant vals 
+                        block[row][col][channel] = dis.readInt();         // R0...R7, then R8...R15, until R56...R63, 
                     }
                 }
             }
@@ -170,6 +227,24 @@ public class MyDecoder {
         else {
             step = (int) Math.round(Math.pow(2, n2));   // use 2^n2 for background block
         }
+
+
+        // DEBUG
+        // Print first few values of first block after dequantization
+        // if (!quantizedBlocks.isEmpty()) {
+        //     System.out.println("First block after dequantization:");
+        //     int[][][] firstBlock = quantizedBlocks.get(0);
+        //     for (int channel = 0; channel < NUM_CHANNELS; channel++) {
+        //         System.out.println("Channel " + channel + ":");
+        //         for (int row = 0; row < 2; row++) {
+        //             for (int col = 0; col < 2; col++) {
+        //                 System.out.printf("(%d,%d): %d ", row, col, 
+        //                                 firstBlock[row][col][channel] * step);
+        //             }
+        //             System.out.println();
+        //         }
+        //     }
+        // }
 
         // iterate over each quantized block to dequantize it
         for (int[][][] quantizedBlock : quantizedBlocks) {
@@ -217,6 +292,23 @@ public class MyDecoder {
             idctBlocks.add(idctBlock);
         }
 
+        // DEBUG
+        // Print first few values after IDCT
+        // if (!dequantizedBlocks.isEmpty()) {
+        //     System.out.println("First block after IDCT:");
+        //     int[][][] firstBlock = idctBlocks.get(0);
+        //     for (int channel = 0; channel < NUM_CHANNELS; channel++) {
+        //         System.out.println("Channel " + channel + ":");
+        //         for (int row = 0; row < 2; row++) {
+        //             for (int col = 0; col < 2; col++) {
+        //                 System.out.printf("(%d,%d): %d ", row, col, 
+        //                                 firstBlock[row][col][channel]);
+        //             }
+        //             System.out.println();
+        //         }
+        //     }
+        // }
+
         return idctBlocks;
     }
 
@@ -239,6 +331,9 @@ public class MyDecoder {
 
         idct = scalar * sum; 
 
+        // Clamp values to [0, 255] range
+        idct = Math.max(0, Math.min(255, idct));
+
         return idct; 
     }
 
@@ -259,6 +354,57 @@ public class MyDecoder {
         return scalars;
     }
 
+    // redo
+    private WritableImage formatFrame(List<List<int[][][]>> decompressedFrame) {
+        System.out.println("FORMATFRAME(): ");
+        System.out.println("decompressedFrame size = # of macroblocks in frame =  " + decompressedFrame.size());
+        if (decompressedFrame.size() != 2040) { System.out.println("ERROR --> invalid # of macroblocks"); }
+        
+        WritableImage frame = new WritableImage(WIDTH, HEIGHT); // initialize image for the current frame
+        PixelWriter writer = frame.getPixelWriter();            // writes RGB pixel data to frame image
+
+        for (int mb = 0; mb < decompressedFrame.size(); mb++) {
+            List<int[][][]> currMacroblock = decompressedFrame.get(mb);
+
+            int mbRow = mb / MACROBLOCKS_PER_ROW;
+            int mbCol = mb % MACROBLOCKS_PER_ROW;
+            int mbX = mbCol * MACROBLOCK_SIZE;
+            int mbY = mbRow * MACROBLOCK_SIZE;
+
+            for (int b = 0; b < BLOCKS_PER_MACROBLOCK; b++) {
+                int[][][] currBlock = currMacroblock.get(b);
+
+                int bRow = b / (BLOCKS_PER_MACROBLOCK / 2);
+                int bCol = b % (BLOCKS_PER_MACROBLOCK / 2);
+                int bX = mbX + bCol * BLOCK_SIZE;
+                int bY = mbY + bRow * BLOCK_SIZE;
+
+                for (int r = 0; r < BLOCK_SIZE; r++) {
+                    for (int c = 0; c < BLOCK_SIZE; c++) {
+                        int red = currBlock[r][c][0];
+                        int green = currBlock[r][c][1];
+                        int blue = currBlock[r][c][2];
+
+                        // DEBUG
+                        // if (mb == 0 && b == 0 && r < 2 && c < 2) {
+                        //     System.out.println(String.format("Pixel (%d,%d) RGB: %d,%d,%d", 
+                        //         r, c, red, green, blue));
+                        // }
+
+                        int pixelX = Math.max(0, Math.min(WIDTH - 1, bX + c));  // clamp = [0, 959]
+                        int pixelY = Math.max(0, Math.min(HEIGHT - 1, bY + r)); // clamp = [0, 539]
+
+                        int rgb = packArgb(red, green, blue);
+                        writer.setArgb(pixelX, pixelY, rgb);     
+                    }
+                }
+            }
+        }
+
+        return frame;
+    }
+
+    /** 
     // convert curr frame (decompressed macroblocks) to a WritableImage
     private WritableImage formatFrame(List<List<int[][][]>> decompressedFrame) {
         WritableImage frame = new WritableImage(WIDTH, HEIGHT); // initialize image for the current frame
@@ -296,6 +442,7 @@ public class MyDecoder {
         
         return frame;
     }
+        */
 
     /** packArgb
     * Packs given RGB channels into one ARGB value
@@ -312,8 +459,9 @@ public class MyDecoder {
         blue = Math.max(0, Math.min(255, blue));
 
         int rgb = (red << 16) | (green << 8) | blue;
+        int argb = (alpha << 24) | (red << 16) | (green << 8) | blue;
 
-        return rgb;
+        return argb;
     }
 
 
@@ -326,20 +474,61 @@ public class MyDecoder {
                 // but the frames can be WritableImage objects --> easiest for JavaFX
     // will need to display input video and output video 
         // want to be able to see OG video vs. compressed-decompressed video 
-    private void display() {
-        AudioVideoPlayer player = new AudioVideoPlayer(frames, audioPath);
-        // player.run();
+    private void displayAV() {
+        AudioVideoPlayer player = new AudioVideoPlayer();
+
+        if (frames == null || frames.isEmpty()) { 
+            System.out.println("\n---DISPLAY() --> NULL. FRAMES");
+            return; 
+        }
+
+                // Use Platform.runLater to ensure the frame list is passed on the correct thread
+        //Platform.runLater(() -> {
+          //  player.setInputData(testFrames());
+            //player.display();  // Ensure display is called on JavaFX thread
+       // });
     }
 
+    // test
+    public List<WritableImage> testFrames() {       // if this works, use this to initialize the decoder obj with file and audio
+        int width = 960;
+        int height = 540;
+        Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.PURPLE};  // Example colors
+
+        List<WritableImage> list = new ArrayList<>();
+
+        for (Color color : colors) {
+            WritableImage writableImage = new WritableImage(width, height);
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    writableImage.getPixelWriter().setColor(x, y, color);  // Fill with the color
+                }
+            }
+            list.add(writableImage);  // Add image to the list
+        }
+
+        return list;
+    }
+
+
+    public List<WritableImage> getFrames() { 
+        parseFile(); 
+        
+        return frames; 
+    }
 
     public static void main(String[] args) {
         File encoderFile = new File(args[0]);   // input = MyEncoder .cmp output file 
         String audioPath = args[1];             // input = MP3 audio file --> store just path for now
 
+        System.out.println("\nINPUT: ");
+        System.out.println("encoderFile: " + encoderFile.getName());
+        System.out.println("audioPath: " + audioPath + "\n");
+        
         MyDecoder decoder = new MyDecoder(encoderFile, audioPath);
 
         decoder.parseFile();
 
-        // decoder.display();
+        // decoder.displayAV();
     }
 }
