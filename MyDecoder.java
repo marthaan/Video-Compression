@@ -115,6 +115,7 @@ public class MyDecoder {
             List<int[][][]> decompressedMacroblock = decompress(currMacroblock, currBlockType);
             // System.out.println("DECOMP CURR MACROBLOCK SIZE: " + decompressedMacroblock.size());
 
+
             // add decompressed macroblock to frame list
             decompressedFrame.add(decompressedMacroblock);
 
@@ -149,24 +150,50 @@ public class MyDecoder {
         for (int b = 0; b < BLOCKS_PER_MACROBLOCK && !endOfFile; b++) {
             int[][][] block = new int[BLOCK_SIZE][BLOCK_SIZE][NUM_CHANNELS];
 
+            // DEBUG
+            // if (b == 0) {
+            //     System.out.println("Reading first block of first macroblock:");
+            //     for (int channel = 0; channel < NUM_CHANNELS && !endOfFile; channel++) {
+            //         System.out.println("Channel " + channel + ":");
+            //         for (int row = 0; row < 2 && !endOfFile; row++) {  // Just print first 2 rows
+            //             for (int col = 0; col < 2 && !endOfFile; col++) {
+            //                 int value = dis.readInt();
+            //                 block[row][col][channel] = value;
+            //                 System.out.printf("(%d,%d): %d ", row, col, value);
+            //             }
+            //             System.out.println();
+            //         }
+            //     }
+            // }
             
-            if (b > 0) { 
-                int currBlockType = readAndCheckInt(dis);
+            // TRIED UNCOMMENTING THIS BECAUSE IT CALLS READANDCHECKINT AGAIN, WHICH MESSES UP OUR POSITIONING
+            // if (b > 0) { 
+            //     int currBlockType = readAndCheckInt(dis);
 
-                if (currBlockType != blockType) { 
-                    System.out.println("ERROR: parseMacroblock() --> mismatched block types");
-                    endOfFile = true;   // will kill the compression since there's an error (if that's what we want)
-                    break; 
-                }
-                // else, no need to update the blockType since its the same 
-                // nextInt should now be the first R value 
-            }
+            //     if (currBlockType != blockType) { 
+            //         System.out.println("ERROR: parseMacroblock() --> mismatched block types");
+            //         endOfFile = true;   // will kill the compression since there's an error (if that's what we want)
+            //         break; 
+            //     }
+            //     // else, no need to update the blockType since its the same 
+            //     // nextInt should now be the first R value 
+            // }
             
+            // for (int channel = 0; channel < NUM_CHANNELS && !endOfFile; channel++) {
+            //     for (int row = 0; row < BLOCK_SIZE && !endOfFile; row++) {
+            //         for (int col = 0; col < BLOCK_SIZE && !endOfFile; col++) {
+            //             // get current channel value at (row, col) --> can be -1 since quant vals 
+            //             block[row][col][channel] = dis.readInt();         // R0...R7, then R8...R15, until R56...R63, 
+            //         }
+            //     }
+            // }
+
+            // CHANGED THIS: PUT CHANNELS ON THE OUTSIDE BECAUSE THAT'S HOW IT IS IN THE ENCODER
             for (int channel = 0; channel < NUM_CHANNELS && !endOfFile; channel++) {
                 for (int row = 0; row < BLOCK_SIZE && !endOfFile; row++) {
                     for (int col = 0; col < BLOCK_SIZE && !endOfFile; col++) {
                         // get current channel value at (row, col) --> can be -1 since quant vals 
-                        block[row][col][channel] = dis.readInt();         // R0...R7, then R8...R15, until R56...R63, 
+                        block[row][col][channel] = readAndCheckInt(dis);         // R0...R7, then R8...R15, until R56...R63, 
                     }
                 }
             }
@@ -203,6 +230,24 @@ public class MyDecoder {
             step = (int) Math.round(Math.pow(2, n2));   // use 2^n2 for background block
         }
 
+
+        // DEBUG
+        // Print first few values of first block after dequantization
+        // if (!quantizedBlocks.isEmpty()) {
+        //     System.out.println("First block after dequantization:");
+        //     int[][][] firstBlock = quantizedBlocks.get(0);
+        //     for (int channel = 0; channel < NUM_CHANNELS; channel++) {
+        //         System.out.println("Channel " + channel + ":");
+        //         for (int row = 0; row < 2; row++) {
+        //             for (int col = 0; col < 2; col++) {
+        //                 System.out.printf("(%d,%d): %d ", row, col, 
+        //                                 firstBlock[row][col][channel] * step);
+        //             }
+        //             System.out.println();
+        //         }
+        //     }
+        // }
+
         // iterate over each quantized block to dequantize it
         for (int[][][] quantizedBlock : quantizedBlocks) {
             int[][][] dequantizedBlock = new int[BLOCK_SIZE][BLOCK_SIZE][NUM_CHANNELS];
@@ -213,6 +258,10 @@ public class MyDecoder {
                     dequantizedBlock[row][col][0] = (int) Math.round(quantizedBlock[row][col][0] * step);
                     dequantizedBlock[row][col][1] = (int) Math.round(quantizedBlock[row][col][1] * step);
                     dequantizedBlock[row][col][2] = (int) Math.round(quantizedBlock[row][col][2] * step);
+
+                    // DEBUG
+                    //System.out.printf("Dequantizing: Before=%d, After=%d%n", quantizedBlock[0][0][0], dequantizedBlock[0][0][0]);
+
                 }
             }
 
@@ -249,6 +298,23 @@ public class MyDecoder {
             idctBlocks.add(idctBlock);
         }
 
+        // DEBUG
+        // Print first few values after IDCT
+        // if (!dequantizedBlocks.isEmpty()) {
+        //     System.out.println("First block after IDCT:");
+        //     int[][][] firstBlock = idctBlocks.get(0);
+        //     for (int channel = 0; channel < NUM_CHANNELS; channel++) {
+        //         System.out.println("Channel " + channel + ":");
+        //         for (int row = 0; row < 2; row++) {
+        //             for (int col = 0; col < 2; col++) {
+        //                 System.out.printf("(%d,%d): %d ", row, col, 
+        //                                 firstBlock[row][col][channel]);
+        //             }
+        //             System.out.println();
+        //         }
+        //     }
+        // }
+
         return idctBlocks;
     }
 
@@ -270,6 +336,9 @@ public class MyDecoder {
         }
 
         idct = scalar * sum; 
+
+        // Clamp values to [0, 255] range
+        idct = Math.max(0, Math.min(255, idct));
 
         return idct; 
     }
@@ -322,8 +391,16 @@ public class MyDecoder {
                         int green = currBlock[r][c][1];
                         int blue = currBlock[r][c][2];
 
+                        // DEBUG
+                        // if (mb == 0 && b == 0 && r < 2 && c < 2) {
+                        //     System.out.println(String.format("Pixel (%d,%d) RGB: %d,%d,%d", 
+                        //         r, c, red, green, blue));
+                        // }
+
                         int pixelX = Math.max(0, Math.min(WIDTH - 1, bX + c));  // clamp = [0, 959]
                         int pixelY = Math.max(0, Math.min(HEIGHT - 1, bY + r)); // clamp = [0, 539]
+
+                        // System.out.printf("Pixel(%d, %d): R=%d, G=%d, B=%d%n", pixelX, pixelY, red, green, blue);
 
                         int rgb = packArgb(red, green, blue);
                         writer.setArgb(pixelX, pixelY, rgb);     
@@ -390,8 +467,9 @@ public class MyDecoder {
         blue = Math.max(0, Math.min(255, blue));
 
         int rgb = (red << 16) | (green << 8) | blue;
+        int argb = (alpha << 24) | (red << 16) | (green << 8) | blue;
 
-        return rgb;
+        return argb;
     }
 
 
