@@ -1,11 +1,13 @@
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
@@ -35,8 +37,8 @@ public class AudioVideoPlayer extends Application {
         String audioPath = "/Users/marthaannwilliams/Desktop/day3/3.wav";
         
         MyDecoder decoder = new MyDecoder(encoderFile, audioPath);
-        frames = decoder.testFrames();  // fetch frames from MyDecoder --> could also use this to pass in file and audio
-        // frames = decoder.getFrames();    // gets actual frames 
+        // frames = decoder.testFrames();  // fetch frames from MyDecoder --> could also use this to pass in file and audio
+        frames = decoder.getFrames();    // gets actual frames 
 
         // If no frames are found
         if (frames == null || frames.isEmpty()) {
@@ -63,9 +65,9 @@ public class AudioVideoPlayer extends Application {
         Button pauseButton = new Button("Pause");
 
         // add buttons to layout
-        StackPane buttonLayout = new StackPane();
+        HBox buttonLayout = new HBox(10);
         buttonLayout.getChildren().addAll(playButton, pauseButton);
-        buttonLayout.setTranslateY(200);    // position buttons vertically
+        buttonLayout.setAlignment(Pos.BOTTOM_CENTER);;    // position buttons vertically
 
         root.getChildren().add(buttonLayout);
 
@@ -80,21 +82,39 @@ public class AudioVideoPlayer extends Application {
         timeline = new Timeline();
         for (int i = 0; i < frames.size(); i++) {
             final int frameIndex = i;
+            
             KeyFrame keyFrame = new KeyFrame(
-                    Duration.seconds(i),  // Delay between frames (1 second each here)
-                    event -> imageView.setImage(frames.get(frameIndex))  // Set the current image
+                    Duration.seconds(i / 30),  // delay between frames (30 fps)
+                    event -> imageView.setImage(frames.get(frameIndex))  // set the current image
             );
+            
             timeline.getKeyFrames().add(keyFrame);
         }
 
         // Play the timeline to show the images one by one
-        timeline.setCycleCount(Timeline.INDEFINITE);  // Infinite loop of frames
+        // timeline.setCycleCount(Timeline.INDEFINITE);  // Infinite loop of frames
 
         // Synchronize audio & video playback 
         timeline.setCycleCount(1);      // play video sequence once
         // timeline.setOnFinished(event -> mediaPlayer.stop());    // Stop audio when video ends
         
-        // Start audio and video 
+        // handle play button
+        playButton.setOnAction(event -> {
+            if (mediaPlayer.getStatus() == MediaPlayer.Status.PAUSED) {
+                mediaPlayer.play(); // resume audio
+                timeline.play();    // resume video frames
+            }
+        });
+
+        // handle pause button 
+        pauseButton.setOnAction(event -> {
+            if (mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING) {
+                mediaPlayer.pause(); // resume audio
+                timeline.pause();    // resume video frames
+            }
+        });
+
+        // start audio and video 
         mediaPlayer.play();
         timeline.play();
     }
