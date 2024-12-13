@@ -72,7 +72,7 @@ public class MyEncoder {
             
             FileInputStream fis = new FileInputStream(inputFile);
 
-            for (int i = 0; i < 30 && readFrame(fis); i++) {
+            for (int i = 0; i < 10 && readFrame(fis); i++) {    // 10 frames per min 
 
                 // if not I-frame --> if P-frame
                 if (i != 0) {
